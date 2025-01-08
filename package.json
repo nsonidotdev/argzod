@@ -1,0 +1,23 @@
+{
+  "name": "argzod",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "tsup src/index.ts --format esm --watch",
+    "build": "tsup src/index.ts --format esm,cjs --dts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "zod": "^3.24.1"
+  },
+  "peerDependencies": {
+    "zod": "^3.24.1"
+  }
+}
