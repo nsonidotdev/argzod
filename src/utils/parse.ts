@@ -1,4 +1,4 @@
-import { OptionValue, ParsedArgument } from "../types";
+import { OptionValue, ParsedCommandString } from "../types";
 
 /**
 *  Parses CLI arguments into a structured format.
@@ -6,8 +6,8 @@ import { OptionValue, ParsedArgument } from "../types";
  * Each argument can be a standalone value, an option prefixed with "-" or "--"
  * @returns Array of parsed arguments
 */
-export const parseArguments = (args: string[]): ParsedArgument[] => {
-    const formatArguments = (arg: string): ParsedArgument => {
+export const parseArguments = (args: string[]): ParsedCommandString[] => {
+    const formatArguments = (arg: string): ParsedCommandString => {
         const dashesCount = countDashes(arg);
 
         if (!dashesCount || dashesCount === arg.length) {
@@ -30,7 +30,7 @@ export const parseArguments = (args: string[]): ParsedArgument[] => {
         };
     }
 
-    const mergeArguments = (arg: ParsedArgument, index: number, formattedArguments: ParsedArgument[]) => {
+    const mergeArguments = (arg: ParsedCommandString, index: number, formattedArguments: ParsedCommandString[]) => {
         const previousArg = formattedArguments[index - 1];
 
         // Skip option values
@@ -56,7 +56,7 @@ export const parseArguments = (args: string[]): ParsedArgument[] => {
     return args
         .map(formatArguments)
         .map(mergeArguments)
-        .filter(arg => arg != null) as ParsedArgument[];
+        .filter(arg => arg != null) as ParsedCommandString[];
 
 
 

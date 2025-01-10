@@ -1,5 +1,5 @@
 import { parseArguments } from './utils/parse';
-import { Command, CommandName } from './types'
+import { Command, CommandName, ExecutionData, ParsedOption } from './types'
 
 export const createProgram = <T extends string = "index">() => {
     const commands: Command[] = [];
@@ -17,20 +17,32 @@ export const createProgram = <T extends string = "index">() => {
                 console.log('Command not found.')
                 return;
             }
-            
-            command.run();
+
+            const options = parsedArgs
+                .filter(arg => arg.type === 'option')
+                .reduce<ExecutionData['options']>((acc, option) => {
+                    return {
+                        ...acc,
+                        [option.name]: option
+                    }
+                }, {});
+
+            command.run({
+                args: parsedArgs.filter(arg => arg.type === 'argument'),
+                options,
+            });
         },
         command: (
-            name: CommandName<T>, 
+            name: CommandName<T>,
             options: {
-                action: () => void;
+                action: (arg: ExecutionData) => void;
             }
         ) => {
             commands.push({
                 name,
-                run: () => {
+                run: (data: ExecutionData) => {
                     console.log(`Running "${name}" command...`)
-                    options.action();
+                    options.action(data);
                 },
             })
         },
@@ -41,14 +53,17 @@ export const createProgram = <T extends string = "index">() => {
 const program = createProgram<"connect">();
 
 program.command("index", {
-    action: () => {
+    action: ({ args, options }) => {
         console.log('Performing index action')
+        console.log(args, options)
+
     }
 })
 
 program.command("connect", {
-    action: () => {
+    action: ({ args, options }) => {
         console.log('Connecting to the server...')
+        console.log(args, options)
     }
 })
 
