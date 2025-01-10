@@ -18,17 +18,21 @@ export const createProgram = <T extends string = "index">() => {
                 return;
             }
 
-            const options = parsedArgs
+            const options: ExecutionData['options'] = parsedArgs
                 .filter(arg => arg.type === 'option')
-                .reduce<ExecutionData['options']>((acc, option) => {
+                .reduce((acc, option) => {
                     return {
                         ...acc,
-                        [option.name]: option
+                        [option.name]: option.value
                     }
                 }, {});
 
+            const commandArguments = parsedArgs
+                .filter(arg => arg.type === 'argument')
+                .map(arg => arg.value);
+
             command.run({
-                args: parsedArgs.filter(arg => arg.type === 'argument'),
+                commandArguments,
                 options,
             });
         },
@@ -53,17 +57,17 @@ export const createProgram = <T extends string = "index">() => {
 const program = createProgram<"connect">();
 
 program.command("index", {
-    action: ({ args, options }) => {
+    action: ({ commandArguments, options }) => {
         console.log('Performing index action')
-        console.log(args, options)
+        console.log(commandArguments, options)
 
     }
 })
 
 program.command("connect", {
-    action: ({ args, options }) => {
+    action: ({ commandArguments, options }) => {
         console.log('Connecting to the server...')
-        console.log(args, options)
+        console.log(commandArguments, options)
     }
 })
 

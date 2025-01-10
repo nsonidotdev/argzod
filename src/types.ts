@@ -3,8 +3,8 @@ import { ParseOptions } from "querystring";
 export type CommandName<T extends string = "index"> = "index"  | T;
 
 export type ExecutionData = {
-    options: Record<string, ParsedOption>;
-    args: Array<ParsedArgument>;
+    options: Record<string, OptionValue>;
+    commandArguments: Array<any>;
 }
 
 export type Command = {
