@@ -1,4 +1,4 @@
-import { ParseOptions } from "querystring";
+import type { z } from "zod";
 
 export type CommandName<T extends string = "index"> = "index" | T;
 
@@ -35,3 +35,15 @@ export type ParsedArgument = {
 export type ParsedCommandString =
     | ParsedOption
     | ParsedArgument
+
+
+export type OptionDefinition = {
+    description?: string;
+    schema?: z.ZodType<any>;
+    name?: Partial<{ short: string; long: string }>
+}
+
+export type ArgumentDefinition = {
+    description?: string;
+    schema: z.ZodType<any>;
+}
