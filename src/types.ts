@@ -1,15 +1,21 @@
 import { ParseOptions } from "querystring";
 
-export type CommandName<T extends string = "index"> = "index"  | T;
+export type CommandName<T extends string = "index"> = "index" | T;
 
-export type ExecutionData<TArgs extends Array<any> = Array<any>> = {
-    options: Record<string, OptionValue>;
+export type ExecutionData<
+    TArgs extends Array<any> = Array<any>,
+    TOpts extends Record<string, any> = Record<string, any>
+> = {
+    options: TOpts;
     commandArguments: TArgs;
 }
 
-export type Command<TArgs extends Array<any> = Array<any>> = {
+export type Command<
+    TArgs extends Array<any> = Array<any>,
+    TOpts extends Record<string, any> = Record<string, any>
+> = {
     name: string;
-    run: (arg: ExecutionData<TArgs>) => void;
+    run: (arg: ExecutionData<TArgs, TOpts>) => void;
 }
 
 export type OptionValue = string | true;
@@ -26,6 +32,6 @@ export type ParsedArgument = {
     value: string;
 }
 
-export type ParsedCommandString = 
-| ParsedOption
-| ParsedArgument
+export type ParsedCommandString =
+    | ParsedOption
+    | ParsedArgument

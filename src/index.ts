@@ -6,8 +6,12 @@ type InferZodArray<TArgs extends Array<ZodType<any>>> = {
     [K in keyof TArgs]: z.infer<TArgs[K]>;
 };
 
+type InferZodRecord<TOpts extends Record<string, ZodType<any>>> = {
+    [K in keyof TOpts]: z.infer<TOpts[K]>;
+};
+
 export const createProgram = <T extends string = "index">() => {
-    const commands: Command<any>[] = [];
+    const commands: Command<any, any>[] = [];
 
     return {
         run: (args: string[] = process.argv.slice(2)) => {
@@ -42,11 +46,15 @@ export const createProgram = <T extends string = "index">() => {
                 options,
             });
         },
-        command: <const TArgs extends Array<ZodType<any>>>(
+        command: <
+            const TArgs extends Array<ZodType<any>>,
+            const TOpts extends Record<string, ZodType<any>>
+        >(
             name: CommandName<T>,
             options: {
-                action: (arg: ExecutionData<InferZodArray<TArgs>>) => void;
+                action: (arg: ExecutionData<InferZodArray<TArgs>, InferZodRecord<TOpts>>) => void;
                 commandArguments?: TArgs;
+                options?: TOpts;
             },
         ) => {
             commands.push({
@@ -56,12 +64,24 @@ export const createProgram = <T extends string = "index">() => {
                         return schema.parse(data.commandArguments[index])
                     }) as InferZodArray<TArgs> ?? [];
 
+                    const zodParsedOptions = options.options
+                        ? Object.fromEntries(
+                            Object.entries(options.options)
+                                .map(([name, schema]) => {
+                                    const value = data.options[name];
+
+                                    return [name, schema.parse(value)]
+                                })
+                        ) as InferZodRecord<TOpts>
+                        : data.options;
+
                     options.action({
                         ...data,
                         commandArguments,
+                        options: zodParsedOptions,
                     });
                 },
-            } satisfies Command<InferZodArray<TArgs>>)
+            } satisfies Command<InferZodArray<TArgs>, InferZodRecord<TOpts>>)
         },
     };
 };
@@ -86,12 +106,22 @@ program.command("index", {
 program.command("connect", {
     action: ({ commandArguments, options }) => {
         console.log('Connecting to the server...')
-        console.log(commandArguments, options)
+
+        console.log("Filtered by", options.filter.join(', '))
     },
     commandArguments: [
         z.any(),
         z.coerce.number().catch(0).transform(arg => arg + 10),
     ],
+    options: {
+        filter: z.string()
+            .refine(arg => {
+                const items = arg.split(',').map(item => item.trim());
+                console.log(items)
+                return items.length > 1;
+            }, { message: "You should pass at least 2 arguments" })
+            .transform(arg => arg.split(",").map(i => i.trim()))
+    }
 })
 
 program.run(process.argv.slice(2));
