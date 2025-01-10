@@ -1,11 +1,16 @@
+import { parseArguments } from './utils/parse';
 import { Command, CommandName } from './types'
 
 export const createProgram = <T extends string = "index">() => {
     const commands: Command[] = [];
 
     return {
-        run: (argv: string[] = process.argv) => {
-            const commandName = argv[2] ?? "index";
+        run: (args: string[] = process.argv.slice(2)) => {
+            const parsedArgs = parseArguments(args);
+
+            const commandName: CommandName<string> = parsedArgs[0]?.type === 'argument'
+                ? parsedArgs[0].value
+                : 'index';
 
             const command = commands.find(c => c.name === commandName);
             if (!command) {
@@ -47,4 +52,4 @@ program.command("connect", {
     }
 })
 
-program.run()
+program.run(process.argv.slice(2));
