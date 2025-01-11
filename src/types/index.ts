@@ -2,7 +2,7 @@ import type { z } from "zod";
 
 export type CommandName<T extends string = "index"> = "index" | T;
 
-export type ExecutionData<
+export type ActionData<
     TArgs extends Array<any> = Array<any>,
     TOpts extends Record<string, any> = Record<string, any>
 > = {
@@ -10,19 +10,23 @@ export type ExecutionData<
     commandArguments: TArgs;
 }
 
-export type Command<
-    TArgs extends Array<any> = Array<any>,
-    TOpts extends Record<string, any> = Record<string, any>
-> = {
+export type RunData = {
+    parsedArguments: ParsedCommandString[];
+}
+
+
+export type Command = {
     name: string;
-    run: (arg: ExecutionData<TArgs, TOpts>) => void;
+    run: (arg: RunData) => void;
 }
 
 export type OptionValue = string | true;
 
+export type OptionVariant = "short" | "long";
+
 export type ParsedOption = {
     type: "option";
-    variant: "long" | "short";
+    variant: OptionVariant;
     name: string;
     value: OptionValue;
 }
@@ -40,7 +44,7 @@ export type ParsedCommandString =
 export type OptionDefinition = {
     description?: string;
     schema?: z.ZodType<any>;
-    name?: Partial<{ short: string; long: string }>
+    name?: Partial<Record<OptionVariant, string>> | string;
 }
 
 export type ArgumentDefinition = {

@@ -1,11 +1,12 @@
 import { parseArguments } from './utils/parse';
-import { ArgumentDefinition, Command, CommandName, ExecutionData, OptionDefinition } from './types'
+import { ArgumentDefinition, Command, CommandName, ActionData, OptionDefinition, ParsedCommandString, ParsedOption } from './types'
 import { z, ZodType } from 'zod';
 import { InferArgumentType, InferOptionType } from './types/utils';
+import { getOptionValue } from './utils';
 
 
 export const createProgram = <T extends string = "index">() => {
-    const commands: Command<any, any>[] = [];
+    const commands: Command[] = [];
 
     return {
         run: (args: string[] = process.argv.slice(2)) => {
@@ -21,24 +22,10 @@ export const createProgram = <T extends string = "index">() => {
                 return;
             }
 
-            const options: ExecutionData['options'] = parsedArgs
-                .filter(arg => arg.type === 'option')
-                .reduce((acc, option) => {
-                    return {
-                        ...acc,
-                        [option.name]: option.value
-                    }
-                }, {});
-
-            const commandArguments = parsedArgs
-                .filter(arg => arg.type === 'argument')
-                .map(arg => arg.value);
 
 
-            command.run({
-                commandArguments,
-                options,
-            });
+
+            command.run({ parsedArguments: parsedArgs });
         },
         command: <
             const TArgs extends Array<ArgumentDefinition>,
@@ -46,7 +33,7 @@ export const createProgram = <T extends string = "index">() => {
         >(
             name: CommandName<T>,
             options: {
-                action: (arg: ExecutionData<InferArgumentType<TArgs>, InferOptionType<TOpts>>) => void;
+                action: (arg: ActionData<InferArgumentType<TArgs>, InferOptionType<TOpts>>) => void;
                 commandArguments?: TArgs;
                 options?: TOpts;
             },
@@ -54,27 +41,49 @@ export const createProgram = <T extends string = "index">() => {
             commands.push({
                 name,
                 run: (data) => {
+                    const baseOptions = data.parsedArguments
+                        .filter(arg => arg.type === 'option')
+
+                    const baseCommandArguments = data.parsedArguments
+                        .filter(arg => arg.type === 'argument')
+
+
                     const commandArguments = options.commandArguments?.map((arg, index) => {
-                        return arg.schema.parse(data.commandArguments[index])
+                        return arg.schema.parse(baseCommandArguments[index])
                     }) as InferArgumentType<TArgs> ?? [];
 
+                    const parsedOptionsRecord = data.parsedArguments
+                        .filter(arg => arg.type === 'option')
+                        .reduce<Record<string, ParsedOption>>((acc, option) => {
+                            return {
+                                ...acc,
+                                [option.name]: option
+                            }
+                        }, {})
+
+                    // TODO: Check short and long option name
                     const zodParsedOptions = options.options
                         ? Object.fromEntries(
                             Object.entries(options.options)
-                                .map(([name, { schema }]) => {
+                                .map(([name, optDef]) => {
+                                    const optionValue = getOptionValue(optDef.name ?? name, parsedOptionsRecord)
+                                    console.log("Option value", optionValue)
+
                                     const fallbackSchema = z.any()
                                         .refine(() => {
-                                            return name in data.options;
+                                            return baseOptions.some(opt => opt.name);
                                         }, { message: "This flag is required" })
                                         .refine(arg => {
                                             return arg === true;
                                         }, { message: "Option is a flag and can't have any values" });
 
-                                    const value = data.options[name];
-                                    return [name, (schema ?? fallbackSchema)?.parse(value)]
+
+                                    return [name, (optDef.schema ?? fallbackSchema)?.parse(optionValue)]
                                 })
                         ) as InferOptionType<TOpts>
-                        : data.options;
+                        : parsedOptionsRecord as InferOptionType<any>;;
+
+
 
                     options.action({
                         ...data,
@@ -82,7 +91,7 @@ export const createProgram = <T extends string = "index">() => {
                         options: zodParsedOptions,
                     });
                 },
-            } satisfies Command<InferArgumentType<TArgs>, InferOptionType<TOpts>>)
+            })
         },
     };
 };
@@ -92,8 +101,6 @@ const program = createProgram<"connect">();
 
 program.command("index", {
     action: ({ commandArguments, options }) => {
-        const num = commandArguments[2];
-
         console.log('Performing index action')
         console.log(commandArguments, options)
     },
@@ -109,7 +116,8 @@ program.command("connect", {
         console.log('Connecting to the server...')
 
         console.log("Filtered by", options.filter.join(', '))
-        console.log("Flag arg", options.down)
+        console.log("nvm", options.nvm)
+        console.log("force", options.force)
     },
     commandArguments: [
         { schema: z.any() },
@@ -125,12 +133,21 @@ program.command("connect", {
                 }, { message: "You should pass at least 2 arguments" })
                 .transform(arg => arg.split(",").map(i => i.trim())),
             name: {
-                long: "filter",
+                long: "filetra",
                 short: 'f'
             },
             description: "Does actualy nothing"
         },
-        down: {}
+        nvm: {
+            schema: z.coerce.number().default(1),
+            description: "Does actualy nothing"
+        },
+        force: {
+            name: {
+                long: "ajd",
+                short: "a"
+            }
+        }
     }
 })
 
