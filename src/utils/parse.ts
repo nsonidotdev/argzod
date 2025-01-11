@@ -1,4 +1,34 @@
-import { OptionValue, ParsedCommandString } from "../types";
+import { OptionValue, ParsedCommandString, ParsedOption } from "../types";
+
+
+export const parseOption = (option: string): ParsedOption => {
+    const dashesCount = countLeadingDashes(option);
+
+    if (dashesCount > 2) {
+        throw new Error("Invalid option format. You should use - or -- to define option")
+    }
+
+    const optionName = option.slice(dashesCount);
+
+    if (dashesCount === 1 && optionName.length === 1) {
+        return {
+            type: "option",
+            value: true,
+            name: optionName,
+            variant: "short"
+        };
+    } else if (dashesCount === 2 && optionName.length > 1) {
+        return {
+            type: "option",
+            value: true,
+            name: optionName,
+            variant: 'long'
+        };
+    } else {
+        throw new Error("Short options should only have one dash and one latter and Long options should have 2 dashes and more than 2 chars")
+    }
+
+}
 
 /**
 *  Parses CLI arguments into a structured format.
@@ -8,7 +38,7 @@ import { OptionValue, ParsedCommandString } from "../types";
 */
 export const parseArguments = (args: string[]): ParsedCommandString[] => {
     const formatArguments = (arg: string): ParsedCommandString => {
-        const dashesCount = countDashes(arg);
+        const dashesCount = countLeadingDashes(arg);
 
         if (!dashesCount || dashesCount === arg.length) {
             // If arg has no dashes or is entirely dashes, treat it as an argument
@@ -18,16 +48,8 @@ export const parseArguments = (args: string[]): ParsedCommandString[] => {
             };
         };
 
-        if (dashesCount > 2) {
-            throw new Error("Invalid option format. You should use - or -- to define option")
-        }
-
-        return {
-            type: "option",
-            value: true, // Temporary value before merging
-            name: arg.slice(dashesCount),
-            variant: dashesCount === 1 ? "short" : 'long'
-        };
+        const option = parseOption(arg);
+        return option;
     }
 
     const mergeArguments = (arg: ParsedCommandString, index: number, formattedArguments: ParsedCommandString[]) => {
@@ -60,10 +82,12 @@ export const parseArguments = (args: string[]): ParsedCommandString[] => {
 
 
 
-    function countDashes(arg: string) {
-        const indexOfDash = [...arg].findIndex(char => char !== '-');
-        return indexOfDash === -1
-            ? arg.length
-            : indexOfDash;
-    }
+
+}
+
+const countLeadingDashes = (arg: string) => {
+    const indexOfDash = [...arg].findIndex(char => char !== '-');
+    return indexOfDash === -1
+        ? arg.length
+        : indexOfDash;
 }
