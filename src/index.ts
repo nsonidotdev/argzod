@@ -61,7 +61,7 @@ export const createProgram = <T extends string = "index">() => {
                             }
                         }, {})
 
-                    // TODO: Check short and long option name
+
                     const zodParsedOptions = options.options
                         ? Object.fromEntries(
                             Object.entries(options.options)
@@ -69,16 +69,18 @@ export const createProgram = <T extends string = "index">() => {
                                     const optionValue = getOptionValue(optDef.name ?? name, parsedOptionsRecord)
                                     console.log("Option value", optionValue)
 
-                                    const fallbackSchema = z.any()
-                                        .refine(() => {
-                                            return baseOptions.some(opt => opt.name);
-                                        }, { message: "This flag is required" })
-                                        .refine(arg => {
-                                            return arg === true;
-                                        }, { message: "Option is a flag and can't have any values" });
+                                    const flagSchema = z.any()
+                                        .refine((v) => {
+                                            if (v === true) return true; 
+                                            if (v == null) return true;
+                                            return false;
+                                        }, { message: "Flag can't take any values" }).transform(v => {
+                                            if (v === true) return true; 
+                                            if (v == null) return false;
+                                            return false;
+                                        });
 
-
-                                    return [name, (optDef.schema ?? fallbackSchema)?.parse(optionValue)]
+                                    return [name, (optDef.schema ?? flagSchema)?.parse(optionValue)]
                                 })
                         ) as InferOptionType<TOpts>
                         : parsedOptionsRecord as InferOptionType<any>;;
