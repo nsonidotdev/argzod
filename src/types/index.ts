@@ -1,4 +1,5 @@
 import type { z } from "zod";
+import { ArgumentType, OptionVariant } from "../enums";
 
 export type CommandName<T extends string = "index"> = "index" | T;
 
@@ -22,17 +23,15 @@ export type Command = {
 
 export type OptionValue = string | true;
 
-export type OptionVariant = "short" | "long";
-
 export type ParsedOption = {
-    type: "option";
+    type: (typeof ArgumentType)['Option'];
     variant: OptionVariant;
     name: string;
     value: OptionValue;
 }
 
 export type ParsedArgument = {
-    type: "argument";
+    type: (typeof ArgumentType)['Argument'];
     value: string;
 }
 

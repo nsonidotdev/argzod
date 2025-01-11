@@ -1,10 +1,5 @@
-import { OptionDefinition, OptionValue, OptionVariant, ParsedOption } from "../types";
-
-// TODO: check and return option naming
-// export const checkOptionNaming = (value: string): OptionVariant => {
-// };
-
-
+import { OptionVariant } from "../enums";
+import { OptionDefinition, OptionValue, ParsedOption } from "../types";
 
 export const getOptionValue = (
     definedOption: OptionDefinition['name'] | string, // Option defined by user
@@ -21,33 +16,33 @@ export const getOptionValue = (
         const isDefinedOptLong = isLong(definedOption);
 
         if (
-            variant === 'long' && isDefinedOptLong
-            || variant === 'short' && !isDefinedOptLong
+            variant === OptionVariant.Long && isDefinedOptLong
+            || variant === OptionVariant.Short && !isDefinedOptLong
         ) {
             return dataOption[1].value;
         }
 
         return;
     } else {
-        if (definedOption?.long && definedOption.short) {
+        if (definedOption?.[OptionVariant.Long] && definedOption[OptionVariant.Short]) {
             return Object.entries(dataOptions).find(([optName]) => {
                 if (isLong(optName)) {
-                    return definedOption.long === optName;
+                    return definedOption[OptionVariant.Long] === optName;
                 } else {
-                    return definedOption.short === optName;
+                    return definedOption[OptionVariant.Short] === optName;
                 }
             })?.[1].value;
         }
 
-        if (definedOption?.long) {
+        if (definedOption?.[OptionVariant.Long]) {
             return Object.entries(dataOptions).find(([optName]) => {
-                return definedOption.long === optName;
+                return definedOption[OptionVariant.Long] === optName;
             })?.[1].value;
         }
 
-        if (definedOption?.short) {
+        if (definedOption?.[OptionVariant.Short]) {
             return Object.entries(dataOptions).find(([optName]) => {
-                return definedOption.short === optName;
+                return definedOption[OptionVariant.Short] === optName;
             })?.[1].value;
         }
     }

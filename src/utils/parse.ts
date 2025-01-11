@@ -1,3 +1,4 @@
+import { ArgumentType, OptionVariant } from "../enums";
 import { OptionValue, ParsedCommandString, ParsedOption } from "../types";
 
 
@@ -12,17 +13,17 @@ export const parseOption = (option: string): ParsedOption => {
 
     if (dashesCount === 1 && optionName.length === 1) {
         return {
-            type: "option",
+            type: ArgumentType.Option,
             value: true,
             name: optionName,
-            variant: "short"
+            variant: OptionVariant.Short
         };
     } else if (dashesCount === 2 && optionName.length > 1) {
         return {
-            type: "option",
+            type: ArgumentType.Option,
             value: true,
             name: optionName,
-            variant: 'long'
+            variant: OptionVariant.Long
         };
     } else {
         throw new Error("Short options should only have one dash and one latter and Long options should have 2 dashes and more than 2 chars")
@@ -43,7 +44,7 @@ export const parseArguments = (args: string[]): ParsedCommandString[] => {
         if (!dashesCount || dashesCount === arg.length) {
             // If arg has no dashes or is entirely dashes, treat it as an argument
             return {
-                type: "argument",
+                type: ArgumentType.Argument,
                 value: arg
             };
         };
@@ -56,15 +57,15 @@ export const parseArguments = (args: string[]): ParsedCommandString[] => {
         const previousArg = formattedArguments[index - 1];
 
         // Skip option values
-        if (previousArg && previousArg.type === 'option' && arg.type === 'argument') return null;
+        if (previousArg && previousArg.type === ArgumentType.Option && arg.type === ArgumentType.Argument) return null;
 
         // Merge option with its value
-        if (arg.type === "option") {
+        if (arg.type === ArgumentType.Option) {
             const nextArgument = formattedArguments[index + 1];
             let value: OptionValue = true;
 
-            if (!nextArgument || nextArgument.type === 'option') value = true;
-            else if (nextArgument?.type === 'argument') value = nextArgument.value;
+            if (!nextArgument || nextArgument.type === ArgumentType.Option) value = true;
+            else if (nextArgument?.type === ArgumentType.Argument) value = nextArgument.value;
 
             return {
                 ...arg,

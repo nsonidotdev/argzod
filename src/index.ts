@@ -3,6 +3,7 @@ import { ArgumentDefinition, Command, CommandName, ActionData, OptionDefinition,
 import { z, ZodType } from 'zod';
 import { InferArgumentType, InferOptionType } from './types/utils';
 import { getOptionValue } from './utils';
+import { ArgumentType } from './enums';
 
 
 export const createProgram = <T extends string = "index">() => {
@@ -12,7 +13,7 @@ export const createProgram = <T extends string = "index">() => {
         run: (args: string[] = process.argv.slice(2)) => {
             const parsedArgs = parseArguments(args);
 
-            const commandName: string = parsedArgs[0]?.type === 'argument'
+            const commandName: string = parsedArgs[0]?.type === ArgumentType.Argument
                 ? parsedArgs[0].value
                 : 'index';
 
@@ -42,10 +43,10 @@ export const createProgram = <T extends string = "index">() => {
                 name,
                 run: (data) => {
                     const baseOptions = data.parsedArguments
-                        .filter(arg => arg.type === 'option')
+                        .filter(arg => arg.type === ArgumentType.Option)
 
                     const baseCommandArguments = data.parsedArguments
-                        .filter(arg => arg.type === 'argument')
+                        .filter(arg => arg.type === ArgumentType.Argument)
 
 
                     const commandArguments = options.commandArguments?.map((arg, index) => {
@@ -53,7 +54,7 @@ export const createProgram = <T extends string = "index">() => {
                     }) as InferArgumentType<TArgs> ?? [];
 
                     const parsedOptionsRecord = data.parsedArguments
-                        .filter(arg => arg.type === 'option')
+                        .filter(arg => arg.type === ArgumentType.Option)
                         .reduce<Record<string, ParsedOption>>((acc, option) => {
                             return {
                                 ...acc,
@@ -76,7 +77,6 @@ export const createProgram = <T extends string = "index">() => {
                                             return false;
                                         }, { message: "Flag can't take any values" }).transform(v => {
                                             if (v === true) return true; 
-                                            if (v == null) return false;
                                             return false;
                                         });
 

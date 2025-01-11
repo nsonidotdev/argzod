@@ -10,3 +10,5 @@ export type InferOptionType<TOpts extends Record<string, OptionDefinition>> = {
         ? z.infer<TOpts[K]['schema']>
         : true;
 };
+
+export type ObjectValues<T extends Record<string, any>> = T[keyof T]
