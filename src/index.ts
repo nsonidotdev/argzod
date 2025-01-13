@@ -3,11 +3,8 @@ import { z } from 'zod';
 import { InferArgumentType, InferOptionType } from './types/utils';
 import { ArgumentType } from './enums';
 import { flagSchema } from './lib/schemas';
-import { parseArguments } from './utils/cli';
+import { argumentParser } from './utils/argument-parser';
 import { getOptionValue } from './utils/options';
-
-// TODO: Error handling
-// TODO: Refactoring
 
 
 export const createProgram = <T extends string = "index">() => {
@@ -15,8 +12,7 @@ export const createProgram = <T extends string = "index">() => {
 
     return {
         run: (args: string[] = process.argv.slice(2)) => {
-            const parsedArgs = parseArguments(args);
-            console.log(parsedArgs)
+            const parsedArgs = argumentParser.parse(args);
 
             const commandName: string = parsedArgs[0]?.type === ArgumentType.Argument
                 ? parsedArgs[0].value
@@ -100,40 +96,38 @@ program.command("connect", {
     action: ({ commandArguments, options }) => {
         console.log('Connecting to the server...')
 
-        console.log("Filtered by", options.filter.join(', '))
-        console.log("nvm", options.nvm)
-        console.log("force", options.force)
+
     },
-    commandArguments: [
-        { schema: z.any() },
-        { schema: z.coerce.number().catch(0).transform(arg => arg + 10) },
-    ],
-    options: {
-        filter: {
-            schema: z.string()
-                .refine(arg => {
-                    const items = arg.split(',').map(item => item.trim());
-                    console.log(items)
-                    return items.length > 1;
-                }, { message: "You should pass at least 2 arguments" })
-                .transform(arg => arg.split(",").map(i => i.trim())),
-            name: {
-                long: "filetra",
-                short: 'f'
-            },
-            description: "Does actualy nothing"
-        },
-        nvm: {
-            schema: z.coerce.number().default(1),
-            description: "Does actualy nothing"
-        },
-        force: {
-            name: {
-                long: "ajd",
-                short: "a"
-            }
-        }
-    }
+    // commandArguments: [
+    //     { schema: z.any() },
+    //     { schema: z.coerce.number().catch(0).transform(arg => arg + 10) },
+    // ],
+    // options: {
+    //     filter: {
+    //         schema: z.string()
+    //             .refine(arg => {
+    //                 const items = arg.split(',').map(item => item.trim());
+    //                 console.log(items)
+    //                 return items.length > 1;
+    //             }, { message: "You should pass at least 2 arguments" })
+    //             .transform(arg => arg.split(",").map(i => i.trim())),
+    //         name: {
+    //             long: "filetra",
+    //             short: 'f'
+    //         },
+    //         description: "Does actualy nothing"
+    //     },
+    //     nvm: {
+    //         schema: z.coerce.number().default(1),
+    //         description: "Does actualy nothing"
+    //     },
+    //     force: {
+    //         name: {
+    //             long: "ajd",
+    //             short: "a"
+    //         }
+    //     }
+    // }
 })
 
 program.run(process.argv.slice(2));

@@ -21,7 +21,7 @@ export type Command = {
     run: (arg: RunData) => void;
 }
 
-export type OptionValue = string | true;
+export type OptionValue = string | true | string[];
 
 export type ParsedOption = {
     type: (typeof ArgumentType)['Option'];
