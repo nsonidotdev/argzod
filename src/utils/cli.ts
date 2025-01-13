@@ -1,35 +1,7 @@
-import { ArgumentType, OptionVariant } from "../enums";
-import { OptionValue, ParsedCommandString, ParsedOption } from "../types";
-
-
-export const parseOption = (option: string): ParsedOption => {
-    const dashesCount = countLeadingDashes(option);
-
-    if (dashesCount > 2) {
-        throw new Error("Invalid option format. You should use - or -- to define option")
-    }
-
-    const optionName = option.slice(dashesCount);
-
-    if (dashesCount === 1 && optionName.length === 1) {
-        return {
-            type: ArgumentType.Option,
-            value: true,
-            name: optionName,
-            variant: OptionVariant.Short
-        };
-    } else if (dashesCount === 2 && optionName.length > 1) {
-        return {
-            type: ArgumentType.Option,
-            value: true,
-            name: optionName,
-            variant: OptionVariant.Long
-        };
-    } else {
-        throw new Error("Short options should only have one dash and one latter and Long options should have 2 dashes and more than 2 chars")
-    }
-
-}
+import { countLeadingDashes } from ".";
+import { ArgumentType } from "../enums";
+import { OptionValue, ParsedCommandString } from "../types";
+import { parseOption } from "./options";
 
 /**
 *  Parses CLI arguments into a structured format.
@@ -76,19 +48,11 @@ export const parseArguments = (args: string[]): ParsedCommandString[] => {
         return arg;
     }
 
-    return args
+    console.log(args
         .map(formatArguments)
+)
+
+    return args
         .map(mergeArguments)
         .filter(arg => arg != null) as ParsedCommandString[];
-
-
-
-
-}
-
-const countLeadingDashes = (arg: string) => {
-    const indexOfDash = [...arg].findIndex(char => char !== '-');
-    return indexOfDash === -1
-        ? arg.length
-        : indexOfDash;
 }

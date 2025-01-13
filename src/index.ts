@@ -1,9 +1,13 @@
-import { parseArguments } from './utils/parse';
 import { ArgumentDefinition, Command, CommandName, ActionData, OptionDefinition, ParsedCommandString, ParsedOption } from './types'
-import { z, ZodType } from 'zod';
+import { z } from 'zod';
 import { InferArgumentType, InferOptionType } from './types/utils';
-import { getOptionValue } from './utils';
 import { ArgumentType } from './enums';
+import { flagSchema } from './lib/schemas';
+import { parseArguments } from './utils/cli';
+import { getOptionValue } from './utils/options';
+
+// TODO: Error handling
+// TODO: Refactoring
 
 
 export const createProgram = <T extends string = "index">() => {
@@ -12,6 +16,7 @@ export const createProgram = <T extends string = "index">() => {
     return {
         run: (args: string[] = process.argv.slice(2)) => {
             const parsedArgs = parseArguments(args);
+            console.log(parsedArgs)
 
             const commandName: string = parsedArgs[0]?.type === ArgumentType.Argument
                 ? parsedArgs[0].value
@@ -22,9 +27,6 @@ export const createProgram = <T extends string = "index">() => {
                 console.log('Command not found.')
                 return;
             }
-
-
-
 
             command.run({ parsedArguments: parsedArgs });
         },
@@ -42,9 +44,6 @@ export const createProgram = <T extends string = "index">() => {
             commands.push({
                 name,
                 run: (data) => {
-                    const baseOptions = data.parsedArguments
-                        .filter(arg => arg.type === ArgumentType.Option)
-
                     const baseCommandArguments = data.parsedArguments
                         .filter(arg => arg.type === ArgumentType.Argument)
 
@@ -68,17 +67,6 @@ export const createProgram = <T extends string = "index">() => {
                             Object.entries(options.options)
                                 .map(([name, optDef]) => {
                                     const optionValue = getOptionValue(optDef.name ?? name, parsedOptionsRecord)
-                                    console.log("Option value", optionValue)
-
-                                    const flagSchema = z.any()
-                                        .refine((v) => {
-                                            if (v === true) return true; 
-                                            if (v == null) return true;
-                                            return false;
-                                        }, { message: "Flag can't take any values" }).transform(v => {
-                                            if (v === true) return true; 
-                                            return false;
-                                        });
 
                                     return [name, (optDef.schema ?? flagSchema)?.parse(optionValue)]
                                 })
@@ -106,11 +94,6 @@ program.command("index", {
         console.log('Performing index action')
         console.log(commandArguments, options)
     },
-    commandArguments: [
-        { schema: z.any() },
-        { schema: z.coerce.number().catch(0) },
-        { schema: z.coerce.date() },
-    ],
 })
 
 program.command("connect", {
