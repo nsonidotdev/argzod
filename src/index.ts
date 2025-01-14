@@ -1,4 +1,4 @@
-import { ArgumentDefinition, Command, CommandName, ActionData, OptionDefinition, ParsedOption, InferArgumentType, InferOptionType } from './types'
+import { ArgumentDefinition, Command, CommandName, ActionData, OptionDefinition, ParsedOption, InferCommandArguments, InferCommandOptions, CommandArguments, CommandOptions } from './types'
 import { ArgumentType } from './enums';
 import { flagSchema } from './lib/schemas';
 import { argumentParser } from './utils/argument-parser';
@@ -25,18 +25,20 @@ export const createProgram = <T extends string = "index">() => {
             command.run({ parsedArguments: parsedArgs });
         },
         command: <
-            const TArgs extends Array<ArgumentDefinition>,
-            const TOpts extends Record<string, OptionDefinition>
+            const TArgs extends CommandArguments,
+            const TOpts extends CommandOptions
         >(
             name: CommandName<T>,
             options: {
-                action: (arg: ActionData<InferArgumentType<TArgs>, InferOptionType<TOpts>>) => void;
+                action: (arg: ActionData<InferCommandArguments<TArgs>, InferCommandOptions<TOpts>>) => void;
                 commandArguments?: TArgs;
                 options?: TOpts;
             },
         ) => {
             commands.push({
                 name,
+                arguments: options.commandArguments ?? [],
+                options: options.options ?? {},
                 run: (data) => {
                     const baseCommandArguments = data.parsedArguments
                         .filter(arg => arg.type === ArgumentType.Argument)
@@ -44,7 +46,7 @@ export const createProgram = <T extends string = "index">() => {
 
                     const commandArguments = options.commandArguments?.map((arg, index) => {
                         return arg.schema.parse(baseCommandArguments[index])
-                    }) as InferArgumentType<TArgs> ?? [];
+                    }) as InferCommandArguments<TArgs> ?? [];
 
                     const parsedOptionsRecord = data.parsedArguments
                         .filter(arg => arg.type === ArgumentType.Option)
@@ -64,8 +66,8 @@ export const createProgram = <T extends string = "index">() => {
 
                                     return [name, (optDef.schema ?? flagSchema)?.parse(optionValue)]
                                 })
-                        ) as InferOptionType<TOpts>
-                        : parsedOptionsRecord as InferOptionType<any>;;
+                        ) as InferCommandOptions<TOpts>
+                        : parsedOptionsRecord as InferCommandOptions<any>;;
 
 
 
