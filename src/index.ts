@@ -1,6 +1,4 @@
-import { ArgumentDefinition, Command, CommandName, ActionData, OptionDefinition, ParsedCommandString, ParsedOption } from './types'
-import { z } from 'zod';
-import { InferArgumentType, InferOptionType } from './types/utils';
+import { ArgumentDefinition, Command, CommandName, ActionData, OptionDefinition, ParsedOption, InferArgumentType, InferOptionType } from './types'
 import { ArgumentType } from './enums';
 import { flagSchema } from './lib/schemas';
 import { argumentParser } from './utils/argument-parser';

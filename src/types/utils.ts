@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { ArgumentDefinition, OptionDefinition } from ".";
+import { ArgumentDefinition, OptionDefinition } from "./arguments";
 
 export type InferArgumentType<TArgs extends Array<ArgumentDefinition>> = {
     [K in keyof TArgs]: z.infer<TArgs[K]['schema']>;
