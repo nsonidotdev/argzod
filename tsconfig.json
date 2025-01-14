@@ -8,5 +8,8 @@
     "skipLibCheck": true,
     "noUncheckedIndexedAccess": true,
     "noEmit": true
-  }
+  },
+  "exclude": [
+    "./src/playground"
+  ]
 }
