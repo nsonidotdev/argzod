@@ -1,15 +1,21 @@
-import { ArgumentDefinition, Command, CommandName, ActionData, OptionDefinition, ParsedOption, InferCommandArguments, InferCommandOptions, CommandArguments, CommandOptions } from './types'
+import { ArgumentDefinition, Command, ActionData, OptionDefinition, ParsedOption, InferCommandArguments, InferCommandOptions, CommandArguments, CommandOptions, CommandName } from './types'
 import { ArgumentType } from './enums';
 import { flagSchema } from './lib/schemas';
 import { argumentParser } from './utils/argument-parser';
 import { getOptionValue } from './utils/options';
+import { matchCommand } from './utils/find-command';
+import { z } from 'zod';
 
 
-export const createProgram = <T extends string = "index">() => {
+export const createProgram = <T extends string>() => {
     const commands: Command[] = [];
 
     return {
         run: (args: string[] = process.argv.slice(2)) => {
+            const targetCommand = matchCommand(args, commands);
+            console.log(args)
+            console.log("TARGET_COMMAND = ", targetCommand ? targetCommand.name ?? "ROOT" : "NEVER")
+
             const parsedArgs = argumentParser.parse(args);
 
             const commandName: string = parsedArgs[0]?.type === ArgumentType.Argument
@@ -85,11 +91,14 @@ export const createProgram = <T extends string = "index">() => {
 
 const program = createProgram<"connect">();
 
-program.command("index", {
+program.command(undefined, {
     action: ({ commandArguments, options }) => {
         console.log('Performing index action')
         console.log(commandArguments, options)
     },
+    commandArguments: [
+        { schema: z.string() },
+    ]
 })
 
 program.command("connect", {
@@ -98,6 +107,9 @@ program.command("connect", {
 
 
     },
+    commandArguments: [
+        { schema: z.coerce.number() },
+    ]
     // commandArguments: [
     //     { schema: z.any() },
     //     { schema: z.coerce.number().catch(0).transform(arg => arg + 10) },

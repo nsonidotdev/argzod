@@ -1,6 +1,6 @@
 import type { ArgumentDefinition, OptionDefinition, ParsedCommandString } from "./arguments";
 
-export type CommandName<T extends string = "index"> = "index" | T;
+export type CommandName<T extends string = "index"> = undefined | T;
 
 export type ActionData<
     TArgs extends Array<any> = Array<any>,
@@ -18,7 +18,7 @@ export type CommandOptions = Record<string, OptionDefinition>;
 export type CommandArguments = Array<ArgumentDefinition>;
 
 export type Command = {
-    name: string;
+    name: CommandName<string>;
     run: (arg: RunData) => void;
     options: CommandOptions;
     arguments: CommandArguments;
