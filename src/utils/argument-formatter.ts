@@ -1,18 +1,23 @@
 import { countLeadingDashes } from ".";
 import { ArgumentType, OptionVariant } from "../enums";
-import { OptionValue, ParsedArgument, ParsedCommandString, ParsedOption } from "../types";
+import { OptionValue, FormattedCommandString, FormattedOption, ProgramConfig } from "../types";
 
 
-class ArgumentParser {
-    public parse(args: string[]): ParsedCommandString[] {
+export class ArgumentFormatter {
+    private _config: ProgramConfig;
+
+    constructor (config?: ProgramConfig) {
+        this._config = config ?? {};
+    }    
+    
+    public format(args: string[]): FormattedCommandString[] {
         const formattedArgs = this._format(args);
         const mergedArgs = this._merge(formattedArgs);
-        console.log(mergedArgs);
 
         return mergedArgs;
     }
 
-    private _format(args: string[]): ParsedCommandString[] {
+    private _format(args: string[]): FormattedCommandString[] {
         return args.map((arg) => {
             const leadingDashesCount = countLeadingDashes(arg);
 
@@ -29,7 +34,7 @@ class ArgumentParser {
         })
     }
 
-    private _validateOptionName(optionName: string, leadingDashesCount: number): ParsedOption {
+    private _validateOptionName(optionName: string, leadingDashesCount: number): FormattedOption {
         if (leadingDashesCount === 1) {
             if (optionName.length === 1) {
                 return {
@@ -59,10 +64,10 @@ class ArgumentParser {
         throw new Error("Invalid option format. You should use - or -- to define option")
     }
 
-    private _merge(formattedArguments: ParsedCommandString[]): ParsedCommandString[] {
+    private _merge(formattedArguments: FormattedCommandString[]): FormattedCommandString[] {
         let optionsStarted = false;
 
-        const mergedArgs: Array<ParsedCommandString | null> = formattedArguments.map((arg, index) => {
+        const mergedArgs: Array<FormattedCommandString | null> = formattedArguments.map((arg, index) => {
             if (!optionsStarted) {
                 optionsStarted = formattedArguments
                     .slice(0, index + 1)
@@ -90,7 +95,7 @@ class ArgumentParser {
         return mergedArgs.filter(arg => arg != null);
     }
 
-    private _getOptionValue(args: ParsedCommandString[], optionIndex: number): OptionValue {
+    private _getOptionValue(args: FormattedCommandString[], optionIndex: number): OptionValue {
         if (args[optionIndex]?.type !== ArgumentType.Option) {
             throw new Error("You should pass option index")
         }
@@ -115,5 +120,3 @@ class ArgumentParser {
         return values;
     }
 }
-
-export const argumentParser = new ArgumentParser;

@@ -3,21 +3,21 @@ import type { ArgumentType, OptionVariant } from "../enums";
 
 export type OptionValue = string | true | string[];
 
-export type ParsedOption = {
+export type FormattedOption = {
     type: (typeof ArgumentType)['Option'];
     variant: OptionVariant;
     name: string;
     value: OptionValue;
 }
 
-export type ParsedArgument = {
+export type FormattedArgument = {
     type: (typeof ArgumentType)['Argument'];
     value: string;
 }
 
-export type ParsedCommandString =
-    | ParsedOption
-    | ParsedArgument
+export type FormattedCommandString =
+    | FormattedOption
+    | FormattedArgument
 
 
 export type OptionDefinition = {

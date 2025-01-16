@@ -1,1 +1,3 @@
-export type ProgramConfig = never;
+export type ProgramConfig = {
+    allowShortOptionsBundling?: boolean;
+};
