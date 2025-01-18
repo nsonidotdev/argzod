@@ -49,32 +49,3 @@ export const getOptionValue = (
     }
 }
 
-
-export const parseOption = (option: string): FormattedOption => {
-    const dashesCount = countLeadingDashes(option);
-
-    if (dashesCount > 2) {
-        throw new Error("Invalid option format. You should use - or -- to define option")
-    }
-
-    const optionName = option.slice(dashesCount);
-
-    if (dashesCount === 1 && optionName.length === 1) {
-        return {
-            type: ArgumentType.Option,
-            value: true,
-            name: optionName,
-            variant: OptionVariant.Short
-        };
-    } else if (dashesCount === 2 && optionName.length > 1) {
-        return {
-            type: ArgumentType.Option,
-            value: true,
-            name: optionName,
-            variant: OptionVariant.Long
-        };
-    } else {
-        throw new Error("Short options should only have one dash and one latter and Long options should have 2 dashes and more than 2 chars")
-    }
-
-}
