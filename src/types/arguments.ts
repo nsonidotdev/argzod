@@ -1,13 +1,12 @@
 import type { z } from "zod";
 import type { ArgumentType, OptionVariant } from "../enums";
 
-export type OptionValue = string | true | string[];
 
 export type FormattedOption = {
     type: (typeof ArgumentType)['Option'];
     variant: OptionVariant;
     name: string;
-    value: OptionValue;
+    value: string;
 }
 
 export type FormattedArgument = {

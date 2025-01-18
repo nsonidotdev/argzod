@@ -1,7 +1,7 @@
 import { countLeadingDashes } from ".";
 import { ArgumentType, OptionVariant } from "../enums";
 import { ArgzodError, ErrorCode } from "../lib/error";
-import { OptionValue, FormattedCommandString, FormattedOption, ProgramConfig } from "../types";
+import { FormattedCommandString, FormattedOption, ProgramConfig } from "../types";
 
 
 export class ArgumentFormatter {
@@ -40,7 +40,7 @@ export class ArgumentFormatter {
             if (optionName.length === 1) {
                 return {
                     type: ArgumentType.Option,
-                    value: true,
+                    value: "",
                     name: optionName,
                     variant: OptionVariant.Short
                 };
@@ -56,7 +56,7 @@ export class ArgumentFormatter {
             if (optionName.length > 1) {
                 return {
                     type: ArgumentType.Option,
-                    value: true,
+                    value: "",
                     name: optionName,
                     variant: OptionVariant.Long
                 };
@@ -105,7 +105,7 @@ export class ArgumentFormatter {
         return mergedArgs.filter(arg => arg != null);
     }
 
-    private _getOptionValue(args: FormattedCommandString[], optionIndex: number): OptionValue {
+    private _getOptionValue(args: FormattedCommandString[], optionIndex: number): string {
         if (args[optionIndex]?.type !== ArgumentType.Option) {
             throw new ArgzodError({
                 code: ErrorCode.Other,
@@ -128,8 +128,6 @@ export class ArgumentFormatter {
             }, [])
 
 
-        if (values.length === 0) return true;
-        if (values.length === 1) return values[0]!;
-        return values;
+        return values.join(' ');
     }
 }

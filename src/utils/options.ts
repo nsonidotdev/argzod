@@ -1,11 +1,10 @@
-import { countLeadingDashes } from ".";
-import { ArgumentType, OptionVariant } from "../enums";
-import { OptionDefinition, OptionValue, FormattedOption } from "../types";
+import { OptionVariant } from "../enums";
+import { OptionDefinition, FormattedOption } from "../types";
 
 export const getOptionValue = (
     definedOption: OptionDefinition['name'] | string, // Option defined by user
     dataOptions: FormattedOption[] // Options passed to CLI
-): OptionValue | undefined => {
+): string | undefined => {
     const isLong = (optName: string) => optName.length > 1;
 
     if (typeof definedOption === 'string') {
