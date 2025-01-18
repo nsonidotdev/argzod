@@ -1,7 +1,7 @@
 import { ArgumentType } from "../enums";
-import { Command, FormattedCommandString } from "../types";
+import { Command, FormattedCommandString, OptionDefinition } from "../types";
 import { ArgumentFormatter as ArgumentFormatter } from "./argument-formatter";
-import { getOptionValue } from "./options";
+import { matchOptionDefinition, stringifyOptionDefintion } from "./options";
 import { flagSchema } from "../lib/schemas";
 import { syncHandleError } from "./handle-error";
 import { ArgzodError, ErrorCode } from "../lib/error";
@@ -67,7 +67,7 @@ const parseCommand = (
 
         if (!argParseResult.success) {
             throw new ArgzodError({
-                code: ErrorCode.ZodParse, 
+                code: ErrorCode.ZodParse,
                 path: `Argument ${index + 1}`,
                 message: argParseResult.error.issues
                     .map(i => i.message)
@@ -78,27 +78,55 @@ const parseCommand = (
         return argParseResult.data;
     });
 
-    const parsedOptions = Object.fromEntries(
-        Object.entries(command.options)
-            .map(([name, optDef]) => {
-                const optionValue = getOptionValue(optDef.name ?? name, formattedOptions);
-                const parsedOption = (optDef.schema ?? flagSchema).safeParse(optionValue);
-                if (!parsedOption.success) {
+    let parsedOptions = Object.fromEntries(formattedOptions.map((option) => {
+        const matchResult = matchOptionDefinition(option, command.options)
+        if (!matchResult) {
+            throw new ArgzodError({
+                code: ErrorCode.OptionNotDefined,
+                path: option.fullName
+            });
+        };
+
+        const [key, optionDefinition] = matchResult
+
+        const parsedValue = (optionDefinition.schema ?? flagSchema).safeParse(option.value);
+        
+        if (!parsedValue.success) {
+            throw new ArgzodError({
+                code: ErrorCode.ZodParse,
+                path: option.fullName,
+                message: parsedValue.error.issues
+                    .map(i => i.message)
+                    .join("\n")
+            })
+        }
+
+        return [key, parsedValue.data];
+    }));
+
+    const notPassedOptionDefinitions = removeObjectKeys(command.options, Object.keys(parsedOptions))
+    const notPassedParsedOptions = Object.fromEntries(
+        Object.entries<OptionDefinition>(notPassedOptionDefinitions)
+            .map(([key, optionDefinition]) => {
+                const parsedValue = (optionDefinition?.schema ?? flagSchema).safeParse(undefined);
+                if (!parsedValue.success) {
                     throw new ArgzodError({
-                        code: ErrorCode.ZodParse, 
-                        path: name, 
-                        message: parsedOption.error.issues
+                        code: ErrorCode.ZodParse,
+                        path: stringifyOptionDefintion([key, optionDefinition]),
+                        message: parsedValue.error.issues
                             .map(i => i.message)
                             .join("\n")
                     })
                 }
 
-                return [
-                    name,
-                    parsedOption.data
-                ];
+                return [key, parsedValue.data];
             })
     );
+
+    parsedOptions = {
+        ...parsedOptions,
+        ...notPassedParsedOptions
+    };
 
     return {
         command,
@@ -116,3 +144,16 @@ export const countLeadingDashes = (arg: string) => {
         : indexOfDash;
 }
 
+export const stringifyZodError = (error: z.ZodError) => {
+    return error.issues
+        .map(i => i.message)
+        .join("\n")
+}
+
+export const removeObjectKeys = <T extends Record<string, any>, U extends keyof T>(object: T, keys: U[]): Omit<T, U> => {
+    const result = { ...object };
+    for (const key of keys) {
+        delete result[key];
+    }
+    return result;
+}

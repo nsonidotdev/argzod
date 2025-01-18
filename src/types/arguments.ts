@@ -7,6 +7,7 @@ export type FormattedOption = {
     variant: OptionVariant;
     name: string;
     value: string;
+    fullName: string;
 }
 
 export type FormattedArgument = {

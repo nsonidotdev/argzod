@@ -1,50 +1,34 @@
 import { OptionVariant } from "../enums";
-import { OptionDefinition, FormattedOption } from "../types";
+import { OptionDefinition, FormattedOption, CommandOptions } from "../types";
 
-export const getOptionValue = (
-    definedOption: OptionDefinition['name'] | string, // Option defined by user
-    dataOptions: FormattedOption[] // Options passed to CLI
-): string | undefined => {
-    const isLong = (optName: string) => optName.length > 1;
+export const matchOptionDefinition = <T extends string>(option: FormattedOption, definitions: CommandOptions): [T, OptionDefinition] | undefined => {
+    return Object.entries<OptionDefinition>(definitions)
+        .find(([key, definition]) => {
+            if (typeof definition.name === 'undefined') {
+                return key === option.name;
+            } else if (typeof definition.name === "string") {
+                return definition.name === option.name;
+            } else {
+                return definition.name.long === option.name || definition.name.short === option.name
+            };
+        }) as [T, OptionDefinition] | undefined
 
-    if (typeof definedOption === 'string') {
-        const dataOption = dataOptions.find(({ name }) => {
-            return definedOption === name;
-        });
-        if (!dataOption) return;
-        const variant = dataOption.variant;
-        const isDefinedOptLong = isLong(definedOption);
-
-        if (
-            variant === OptionVariant.Long && isDefinedOptLong
-            || variant === OptionVariant.Short && !isDefinedOptLong
-        ) {
-            return dataOption.value;
-        }
-
-        return;
-    } else {
-        if (definedOption?.[OptionVariant.Long] && definedOption[OptionVariant.Short]) {
-            return dataOptions.find(({ name }) => {
-                if (isLong(name)) {
-                    return definedOption[OptionVariant.Long] === name;
-                } else {
-                    return definedOption[OptionVariant.Short] === name;
-                }
-            })?.value;
-        }
-
-        if (definedOption?.[OptionVariant.Long]) {
-            return dataOptions.find(({ name }) => {
-                return definedOption[OptionVariant.Long] === name;
-            })?.value;
-        }
-
-        if (definedOption?.[OptionVariant.Short]) {
-            return dataOptions.find(({ name }) => {
-                return definedOption[OptionVariant.Short] === name;
-            })?.value;
-        }
-    }
 }
 
+export const stringifyOptionDefintion = ([key, defintion]: [string, OptionDefinition]): string => {
+    const isLong = (option: string) => option.length > 1;
+
+    if (typeof defintion.name === "undefined") {
+        return isLong(key) 
+            ? "--" + key
+            : "-" + key
+    } else if (typeof defintion.name === 'string') {
+        return isLong(defintion.name) 
+            ? "--" + defintion.name
+            : "-" + defintion.name
+    } else {
+        return defintion.name.long 
+            ? "--" + defintion.name.long
+            : '-' + defintion.name.short
+    }
+}

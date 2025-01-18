@@ -36,18 +36,21 @@ export class ArgumentFormatter {
     }
 
     private _validateOptionName(optionName: string, leadingDashesCount: number): FormattedOption {
+        const fullName = `${'-'.repeat(leadingDashesCount)}${optionName}`;
+
         if (leadingDashesCount === 1) {
             if (optionName.length === 1) {
                 return {
                     type: ArgumentType.Option,
                     value: "",
                     name: optionName,
-                    variant: OptionVariant.Short
+                    variant: OptionVariant.Short,
+                    fullName
                 };
             } else {
                 throw new ArgzodError({
                     code: ErrorCode.InvalidShortOptionFormat,
-                    path: `-${optionName}`
+                    path: fullName
                 })
             }
         }
@@ -58,19 +61,20 @@ export class ArgumentFormatter {
                     type: ArgumentType.Option,
                     value: "",
                     name: optionName,
-                    variant: OptionVariant.Long
+                    variant: OptionVariant.Long,
+                    fullName
                 };
             } else {
                 throw new ArgzodError({
                     code: ErrorCode.InvalidLongOptionFormat,
-                    path: `--${optionName}`
+                    path: fullName
                 })
             }
         }
 
         throw new ArgzodError({
             code: ErrorCode.InvalidLongOptionFormat,
-            path: `${[...Array(leadingDashesCount).fill('-').join('')]}${optionName}`
+            path: fullName
         })
     }
 
