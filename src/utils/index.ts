@@ -1,10 +1,11 @@
-import { z } from "zod";
-import { ArgumentType, OptionVariant } from "../enums";
-import { Command, OptionDefinition, OptionValue, FormattedCommandString, FormattedOption } from "../types";
+import { ArgumentType } from "../enums";
+import { Command, FormattedCommandString } from "../types";
 import { ArgumentFormatter as ArgumentFormatter } from "./argument-formatter";
 import { getOptionValue } from "./options";
 import { flagSchema } from "../lib/schemas";
 import { syncHandleError } from "./handle-error";
+import { ArgzodError, ErrorCode } from "../lib/error";
+import { z } from "zod";
 
 type Options = {
     commandLine: string[];
@@ -16,7 +17,11 @@ export const getCommandData = ({ commandLine, commands }: Options) => {
     const namedCommand = commands.find(c => c.name === commandLine[0]);
     const indexCommand = commands.find(c => c.name === undefined);
 
-    if (!namedCommand && !indexCommand) throw new Error("Command not found")
+    if (!namedCommand && !indexCommand) {
+        throw new ArgzodError({
+            code: ErrorCode.CommandNotFound,
+        });
+    }
 
     let namedCommandData: ReturnType<typeof syncHandleError<ReturnType<typeof parseCommand>>> | null = null;
     let indexCommandData: ReturnType<typeof syncHandleError<ReturnType<typeof parseCommand>>> | null = null;
@@ -29,20 +34,21 @@ export const getCommandData = ({ commandLine, commands }: Options) => {
         if (namedCommandData.data) return namedCommandData.data;
     }
 
+
     if (indexCommand) {
         const formattedCommandLine = argFormatter.format(commandLine);
         indexCommandData = syncHandleError(() => parseCommand(indexCommand, formattedCommandLine));
 
         if (indexCommandData.data) return indexCommandData.data;
         if (indexCommand.arguments.length === commandLine.length && indexCommand.arguments.length > 0) {
-            throw new Error("Invalid arguments for root command")
+            throw indexCommandData.error;
         }
     }
 
-    if (!namedCommand) {
-        throw new Error("Command not found");
+    if (namedCommand) {
+        throw namedCommandData?.error
     } else {
-        throw new Error(`Invalid arguments for "${namedCommand.name}" command`)
+        throw indexCommandData?.error
     }
 }
 
@@ -57,17 +63,39 @@ const parseCommand = (
     if (formattedArguments.length > command.arguments.length) throw new Error('Too many arguments');
 
     const parsedArguments = command.arguments.map((argDef, index) => {
-        return argDef.schema.parse(formattedArguments[index]?.value);
+        const argParseResult = argDef.schema.safeParse(formattedArguments[index]?.value);
+
+        if (!argParseResult.success) {
+            throw new ArgzodError({
+                code: ErrorCode.ZodParse, 
+                path: `Argument ${index + 1}`,
+                message: argParseResult.error.issues
+                    .map(i => i.message)
+                    .join("\n")
+            })
+        }
+
+        return argParseResult.data;
     });
 
     const parsedOptions = Object.fromEntries(
         Object.entries(command.options)
             .map(([name, optDef]) => {
                 const optionValue = getOptionValue(optDef.name ?? name, formattedOptions);
+                const parsedOption = (optDef.schema ?? flagSchema).safeParse(optionValue);
+                if (!parsedOption.success) {
+                    throw new ArgzodError({
+                        code: ErrorCode.ZodParse, 
+                        path: name, 
+                        message: parsedOption.error.issues
+                            .map(i => i.message)
+                            .join("\n")
+                    })
+                }
 
                 return [
                     name,
-                    (optDef.schema ?? flagSchema).parse(optionValue)
+                    parsedOption.data
                 ];
             })
     );

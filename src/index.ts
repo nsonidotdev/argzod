@@ -2,6 +2,7 @@ import { Command, InferCommandArguments, InferCommandOptions, CommandArguments, 
 import { z } from 'zod';
 import { syncHandleError } from './utils/handle-error';
 import { getCommandData } from './utils';
+import { ArgzodError } from './lib/error';
 
 
 export const createProgram = <T extends string>() => {
@@ -9,11 +10,20 @@ export const createProgram = <T extends string>() => {
 
     return {
         run: (args: string[] = process.argv.slice(2)) => {
-
             const { data, error } = syncHandleError(() => getCommandData({ commandLine: args, commands }))
 
             if (error) {
-                console.error('ERROR', error.name);
+                if (error instanceof ArgzodError) {
+                    console.error(error.message);
+                }
+
+                if (error instanceof z.ZodError) {
+                    console.error(error.issues
+                        .map(i => {i.message})
+                        .join("\n")
+                    )
+                }
+
                 process.exit(1);
             }
 
@@ -63,8 +73,6 @@ program.command(undefined, {
 
     },
     commandArguments: [
-        { schema: z.string() },
-        { schema: z.coerce.number() },
     ],
     options: {}
 })
@@ -72,11 +80,18 @@ program.command(undefined, {
 program.command("connect", {
     action: ({ commandArguments, options }) => {
         console.log(`Connecting to the server... on port ${commandArguments[0]}`)
+        console.log(options)
     },
     commandArguments: [
-        { schema: z.coerce.number().catch(8080) },
+        { schema: z.coerce.number().min(1000)  },
     ],
-    options: {}
+    options: {
+        col: {
+            name: { long: "col", short: "c" },
+            description: "",
+            schema: z.coerce.number().min(0).max(100)
+        }
+    }
     // commandArguments: [
     //     { schema: z.any() },
     //     { schema: z.coerce.number().catch(0).transform(arg => arg + 10) },

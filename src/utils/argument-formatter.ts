@@ -1,15 +1,16 @@
 import { countLeadingDashes } from ".";
 import { ArgumentType, OptionVariant } from "../enums";
+import { ArgzodError, ErrorCode } from "../lib/error";
 import { OptionValue, FormattedCommandString, FormattedOption, ProgramConfig } from "../types";
 
 
 export class ArgumentFormatter {
     private _config: ProgramConfig;
 
-    constructor (config?: ProgramConfig) {
+    constructor(config?: ProgramConfig) {
         this._config = config ?? {};
-    }    
-    
+    }
+
     public format(args: string[]): FormattedCommandString[] {
         const formattedArgs = this._format(args);
         const mergedArgs = this._merge(formattedArgs);
@@ -44,7 +45,10 @@ export class ArgumentFormatter {
                     variant: OptionVariant.Short
                 };
             } else {
-                throw new Error("Short options should only contain one character")
+                throw new ArgzodError({
+                    code: ErrorCode.InvalidShortOptionFormat,
+                    path: `-${optionName}`
+                })
             }
         }
 
@@ -57,11 +61,17 @@ export class ArgumentFormatter {
                     variant: OptionVariant.Long
                 };
             } else {
-                throw new Error("Long options should contain at least 2 characters")
+                throw new ArgzodError({
+                    code: ErrorCode.InvalidLongOptionFormat,
+                    path: `--${optionName}`
+                })
             }
         }
 
-        throw new Error("Invalid option format. You should use - or -- to define option")
+        throw new ArgzodError({
+            code: ErrorCode.InvalidLongOptionFormat,
+            path: `${[...Array(leadingDashesCount).fill('-').join('')]}${optionName}`
+        })
     }
 
     private _merge(formattedArguments: FormattedCommandString[]): FormattedCommandString[] {
@@ -97,7 +107,10 @@ export class ArgumentFormatter {
 
     private _getOptionValue(args: FormattedCommandString[], optionIndex: number): OptionValue {
         if (args[optionIndex]?.type !== ArgumentType.Option) {
-            throw new Error("You should pass option index")
+            throw new ArgzodError({
+                code: ErrorCode.Other,
+                message: "Internal error"
+            })
         }
 
         let shouldIterate = true;
