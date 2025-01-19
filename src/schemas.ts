@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const flagSchema = z.string().or(z.undefined())
+const flagSchema = z.string().or(z.undefined())
     .refine((v) => {
         if (v === "" || v === undefined) return true;
         return false;
@@ -10,3 +10,7 @@ export const flagSchema = z.string().or(z.undefined())
         if (v === undefined) return false;
         return false;
     });
+
+export const schemas = {
+    flagSchema
+} as const;

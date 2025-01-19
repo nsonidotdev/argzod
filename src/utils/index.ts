@@ -3,7 +3,7 @@ import { FormattedCommandString, OptionDefinition } from "../types/arguments";
 import { Command } from "../types/command";
 import { ArgumentFormatter as ArgumentFormatter } from "./formatter";
 import { matchOptionDefinition, stringifyOptionDefintion } from "./options";
-import { flagSchema } from "../schemas";
+import { schemas } from "../schemas";
 import { trySync } from "./try";
 import { ArgzodError, ErrorCode } from "../errors";
 import { z } from "zod";
@@ -84,7 +84,7 @@ const parseCommand = (
 
         const [key, optionDefinition] = matchResult
 
-        const parsedValue = (optionDefinition.schema ?? flagSchema).safeParse(option.value);
+        const parsedValue = (optionDefinition.schema ?? schemas.flagSchema).safeParse(option.value);
 
         if (!parsedValue.success) {
             throw new ArgzodError({
@@ -103,7 +103,7 @@ const parseCommand = (
     const notPassedParsedOptions = Object.fromEntries(
         Object.entries<OptionDefinition>(notPassedOptionDefinitions)
             .map(([key, optionDefinition]) => {
-                const parsedValue = (optionDefinition?.schema ?? flagSchema).safeParse(undefined);
+                const parsedValue = (optionDefinition?.schema ?? schemas.flagSchema).safeParse(undefined);
                 if (!parsedValue.success) {
                     throw new ArgzodError({
                         code: ErrorCode.ZodParse,
