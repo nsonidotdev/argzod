@@ -1,12 +1,12 @@
 type Result<T> = {
+    success: true
     data: T;
-    error: null;
 } | {
-    data: null;
+    success: false
     error: any;
 };
 
-export const asyncHandleError = async <T>(dataSource:  Promise<T> | (() => Promise<T>)): Promise<Result<T>> => {
+export const tryAsync = async <T>(dataSource: Promise<T> | (() => Promise<T>)): Promise<Result<T>> => {
     try {
         let data: T | Promise<T>;
 
@@ -17,26 +17,26 @@ export const asyncHandleError = async <T>(dataSource:  Promise<T> | (() => Promi
         }
 
         return {
-            data,
-            error: null
+            success: true,
+            data
         };
     } catch (error) {
         return {
-            data: null,
+            success: false,
             error
         };
     }
 }
 
-export function syncHandleError<T>(dataSource: () => T): Result<T> {
+export function trySync<T>(dataSource: () => T): Result<T> {
     try {
         return {
             data: dataSource(),
-            error: null
+            success: true
         };
     } catch (error) {
         return {
-            data: null,
+            success: false,
             error
         };
     }

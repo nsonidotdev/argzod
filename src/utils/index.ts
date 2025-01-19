@@ -3,7 +3,7 @@ import { Command, FormattedCommandString, OptionDefinition } from "../types";
 import { ArgumentFormatter as ArgumentFormatter } from "./argument-formatter";
 import { matchOptionDefinition, stringifyOptionDefintion } from "./options";
 import { flagSchema } from "../lib/schemas";
-import { syncHandleError } from "./handle-error";
+import { trySync } from "./handle-error";
 import { ArgzodError, ErrorCode } from "../lib/error";
 import { z } from "zod";
 
@@ -16,40 +16,34 @@ export const getCommandData = ({ commandLine, commands }: Options) => {
 
     const namedCommand = commands.find(c => c.name === commandLine[0]);
     const indexCommand = commands.find(c => c.name === undefined);
+    const targetCommand = namedCommand ?? indexCommand;
 
-    if (!namedCommand && !indexCommand) {
+    commandLine = targetCommand === indexCommand 
+        ? commandLine
+        : commandLine.slice(1)
+
+    
+
+    if (!targetCommand) {
         throw new ArgzodError({
             code: ErrorCode.CommandNotFound,
         });
     }
 
-    let namedCommandData: ReturnType<typeof syncHandleError<ReturnType<typeof parseCommand>>> | null = null;
-    let indexCommandData: ReturnType<typeof syncHandleError<ReturnType<typeof parseCommand>>> | null = null;
+    const formattedCommandLine = argFormatter.format(commandLine);
+    const formattedArgs = formattedCommandLine.filter(arg => arg.type === ArgumentType.Argument);
 
+    const targetCommandResult = trySync(() => parseCommand(targetCommand, formattedCommandLine));
+    if (targetCommandResult.success) return targetCommandResult.data;
 
-    if (namedCommand) {
-        const formattedCommandLine = argFormatter.format(commandLine.slice(1));
-        namedCommandData = syncHandleError(() => parseCommand(namedCommand, formattedCommandLine));
-
-        if (namedCommandData.data) return namedCommandData.data;
+    if (targetCommand === namedCommand || (targetCommand === indexCommand && targetCommand.arguments.length === formattedArgs.length)) {
+        throw targetCommandResult.error;
     }
 
-
-    if (indexCommand) {
-        const formattedCommandLine = argFormatter.format(commandLine);
-        indexCommandData = syncHandleError(() => parseCommand(indexCommand, formattedCommandLine));
-
-        if (indexCommandData.data) return indexCommandData.data;
-        if (indexCommand.arguments.length === commandLine.length && indexCommand.arguments.length > 0) {
-            throw indexCommandData.error;
-        }
-    }
-
-    if (namedCommand) {
-        throw namedCommandData?.error
-    } else {
-        throw indexCommandData?.error
-    }
+    throw new ArgzodError({ 
+        code: ErrorCode.CommandNotFound,
+        message: `Command ${formattedArgs[0]?.value ?? "?"} not found`
+    })
 }
 
 
@@ -90,7 +84,7 @@ const parseCommand = (
         const [key, optionDefinition] = matchResult
 
         const parsedValue = (optionDefinition.schema ?? flagSchema).safeParse(option.value);
-        
+
         if (!parsedValue.success) {
             throw new ArgzodError({
                 code: ErrorCode.ZodParse,

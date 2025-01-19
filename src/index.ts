@@ -1,6 +1,6 @@
 import { Command, InferCommandArguments, InferCommandOptions, CommandArguments, CommandOptions, CommandName, ActionFn } from './types'
 import { z } from 'zod';
-import { syncHandleError } from './utils/handle-error';
+import { trySync } from './utils/handle-error';
 import { getCommandData } from './utils';
 import { ArgzodError } from './lib/error';
 
@@ -10,15 +10,15 @@ export const createProgram = <T extends string>() => {
 
     return {
         run: (args: string[] = process.argv.slice(2)) => {
-            const { data, error } = syncHandleError(() => getCommandData({ commandLine: args, commands }))
+            const commandResult = trySync(() => getCommandData({ commandLine: args, commands }))
 
-            if (error) {
-                if (error instanceof ArgzodError) {
-                    console.error(error.message);
+            if (!commandResult.success) {
+                if (commandResult.error instanceof ArgzodError) {
+                    console.error(commandResult.error.message);
                 }
 
-                if (error instanceof z.ZodError) {
-                    console.error(error.issues
+                if (commandResult.error instanceof z.ZodError) {
+                    console.error(commandResult.error.issues
                         .map(i => {i.message})
                         .join("\n")
                     )
@@ -27,14 +27,9 @@ export const createProgram = <T extends string>() => {
                 process.exit(1);
             }
 
-            if (!data) {
-                console.error("Something went wrong")
-                process.exit(1)
-            }
-
-            data.command.run({
-                commandArguments: data.parsedArguments,
-                options: data.parsedOptions
+            commandResult.data.command.run({
+                commandArguments: commandResult.data.parsedArguments,
+                options: commandResult.data.parsedOptions
             });
 
         },
@@ -73,6 +68,7 @@ program.command(undefined, {
 
     },
     commandArguments: [
+        { schema: z.coerce.number() }
     ],
     options: {}
 })
