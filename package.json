@@ -13,12 +13,11 @@
 	"main": "dist/index.js",
 	"module": "dist/index.mjs",
 	"types": "dist/index.d.ts",
-  "type": "module",
 	"scripts": {
 		"dev": "tsup src/index.ts --format esm --watch",
 		"build": "tsup src/index.ts --format esm,cjs --dts",
 		"lint": "tsc",
-    "check-exports": "attw --pack ."
+		"check-exports": "attw --pack ."
 	},
 	"keywords": [
 		"cli",
