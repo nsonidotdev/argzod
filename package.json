@@ -1,25 +1,38 @@
 {
-  "name": "argzod",
-  "version": "0.0.0",
-  "description": "",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "dev": "tsup src/index.ts --format esm --watch",
-    "build": "tsup src/index.ts --format esm,cjs --dts",
-    "lint": "tsc"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "@types/node": "^22.10.5",
-    "tsup": "^8.3.5",
-    "typescript": "^5.7.2",
-    "zod": "^3.24.1"
-  },
-  "peerDependencies": {
-    "zod": "^3.24.1"
-  }
+	"name": "argzod",
+	"version": "0.0.0",
+	"description": "Command-line interfaces powered with Zod",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nsonidotdev/argzod.git"
+	},
+	"homepage": "https://github.com/nsonidotdev/argzod.git",
+	"files": [
+		"dist"
+	],
+	"main": "dist/index.js",
+	"module": "dist/index.mjs",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"dev": "tsup src/index.ts --format esm --watch",
+		"build": "tsup src/index.ts --format esm,cjs --dts",
+		"lint": "tsc"
+	},
+	"keywords": [
+		"cli",
+		"cli-parser",
+		"zod"
+	],
+	"author": "Anton Stetsiura <anton.stecyura.pr1@gmail.com>",
+	"license": "MIT",
+	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.17.3",
+		"@types/node": "^22.10.5",
+		"tsup": "^8.3.5",
+		"typescript": "^5.7.2",
+		"zod": "^3.24.1"
+	},
+	"peerDependencies": {
+		"zod": "^3.24.1"
+	}
 }
