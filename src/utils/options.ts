@@ -1,5 +1,5 @@
-import { OptionVariant } from "../enums";
-import { OptionDefinition, FormattedOption, CommandOptions } from "../types";
+import { FormattedOption, OptionDefinition } from "../types/arguments";
+import { CommandOptions } from "../types/command";
 
 export const matchOptionDefinition = <T extends string>(option: FormattedOption, definitions: CommandOptions): [T, OptionDefinition] | undefined => {
     return Object.entries<OptionDefinition>(definitions)

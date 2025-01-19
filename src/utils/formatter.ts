@@ -1,7 +1,8 @@
 import { countLeadingDashes } from ".";
 import { ArgumentType, OptionVariant } from "../enums";
-import { ArgzodError, ErrorCode } from "../lib/error";
-import { FormattedCommandString, FormattedOption, ProgramConfig } from "../types";
+import { ArgzodError, ErrorCode } from "../errors";
+import { FormattedCommandString, FormattedOption } from "../types/arguments";
+import { ProgramConfig } from "../types/program";
 
 
 export class ArgumentFormatter {

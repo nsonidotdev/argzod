@@ -1,10 +1,11 @@
 import { ArgumentType } from "../enums";
-import { Command, FormattedCommandString, OptionDefinition } from "../types";
-import { ArgumentFormatter as ArgumentFormatter } from "./argument-formatter";
+import { FormattedCommandString, OptionDefinition } from "../types/arguments";
+import { Command } from "../types/command";
+import { ArgumentFormatter as ArgumentFormatter } from "./formatter";
 import { matchOptionDefinition, stringifyOptionDefintion } from "./options";
-import { flagSchema } from "../lib/schemas";
-import { trySync } from "./handle-error";
-import { ArgzodError, ErrorCode } from "../lib/error";
+import { flagSchema } from "../schemas";
+import { trySync } from "./try";
+import { ArgzodError, ErrorCode } from "../errors";
 import { z } from "zod";
 
 type Options = {
