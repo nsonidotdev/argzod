@@ -1,60 +1,78 @@
-import { Command, CommandArguments, CommandOptions, CommandName, ActionFn } from '../types/command'
-import { InferCommandArguments, InferCommandOptions } from '../types/utils';
+import { Command, CommandArguments, CommandOptions, CommandName, ActionFn, CommandDefinition } from '../types/command'
 import { z } from 'zod';
 import { trySync } from '../utils/try';
 import { getCommandData } from '../utils';
-import { ArgzodError } from '../errors';
+import { ArgzodError, ErrorCode } from '../errors';
 
+export const createProgram = () => new Program();
 
-export const createProgram = <T extends string>() => {
-    const commands: Command[] = [];
+class Program<T extends string> {
+    private _commands: Command[];
 
-    return {
-        run: (args: string[] = process.argv.slice(2)) => {
-            const commandResult = trySync(() => getCommandData({ commandLine: args, commands }))
+    constructor() {
+        this._commands = [];
+    }
 
-            if (!commandResult.success) {
-                if (commandResult.error instanceof ArgzodError) {
-                    console.error(commandResult.error.message);
-                }
+    run(args: string[] = process.argv.slice(2)) {
+        const commandResult = trySync(() => getCommandData({
+            commandLine: args,
+            commands: this._commands
+        }));
 
-                if (commandResult.error instanceof z.ZodError) {
-                    console.error(commandResult.error.issues
-                        .map(i => {i.message})
-                        .join("\n")
-                    )
-                }
-
-                process.exit(1);
+        if (!commandResult.success) {
+            if (commandResult.error instanceof ArgzodError) {
+                console.error(commandResult.error.message);
             }
 
-            commandResult.data.command.run({
-                commandArguments: commandResult.data.parsedArguments,
-                options: commandResult.data.parsedOptions
-            });
+            if (commandResult.error instanceof z.ZodError) {
+                console.error(commandResult.error.issues
+                    .map(i => { i.message })
+                    .join("\n")
+                )
+            }
 
-        },
+            process.exit(1);
+        }
 
-        // Here we only need to make types for arguments of command function and we don't care about type in commands array
-        command: <
-            const TArgs extends CommandArguments,
-            const TOpts extends CommandOptions
-        >(
-            name: CommandName<T>,
-            options: {
-                action: ActionFn<InferCommandArguments<TArgs>, InferCommandOptions<TOpts>>;
-                commandArguments?: TArgs;
-                options?: TOpts;
-            },
-        ) => {
-            const command: Command = {
-                name,
-                arguments: options.commandArguments ?? [],
-                options: options.options ?? {},
-                run: options.action as ActionFn
-            };
-
-            commands.push(command);
-        },
+        commandResult.data.command.run({
+            commandArguments: commandResult.data.parsedArguments,
+            options: commandResult.data.parsedOptions
+        });
     };
-};
+
+    command<
+        const TArgs extends CommandArguments,
+        const TOpts extends CommandOptions
+    >(
+        options: CommandDefinition<T, TArgs, TOpts>
+    ): Command {
+        const command: Command = {
+            name: options.name,
+            arguments: options.commandArguments ?? [],
+            options: options.options ?? {},
+            run: options.action as ActionFn,
+        };
+
+        if (this._commands.find(c => c.name === command.name)) {
+            throw new ArgzodError({
+                code: ErrorCode.CommandDuplication
+            });
+        }
+
+        this._commands.push(command as Command);
+
+        return command;
+    };
+
+    attachCommand(command: Command) {
+        if (this._commands.find(c => c.name === command.name)) {
+            throw new ArgzodError({
+                code: ErrorCode.CommandDuplication
+            });
+        }
+
+        this._commands.push(command as Command);
+        
+        return this;
+    }
+}

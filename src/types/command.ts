@@ -1,7 +1,7 @@
 import type { ArgumentDefinition, OptionDefinition, FormattedCommandString } from "./arguments";
 import { InferCommandArguments, InferCommandOptions } from "./utils";
 
-export type CommandName<T extends string = "index"> = undefined | T;
+export type CommandName<T extends string = string> = undefined | T;
 
 
 export type ActionFn<
@@ -21,9 +21,23 @@ export type ActionData<
 export type CommandOptions = Record<string, OptionDefinition>;
 export type CommandArguments = Array<ArgumentDefinition>;
 
-export type Command<TArgs extends CommandArguments = CommandArguments, TOpts extends CommandOptions = CommandOptions> = {
+export type Command<
+    TArgs extends CommandArguments = CommandArguments,
+    TOpts extends CommandOptions = CommandOptions
+> = {
     name: CommandName<string>;
     run: (arg: ActionData<InferCommandArguments<TArgs>, InferCommandOptions<TOpts>>) => void;
     options: TOpts;
     arguments: TArgs;
+}
+
+export type CommandDefinition<
+    TName extends CommandName = CommandName<string>,
+    TArgs extends CommandArguments = never[],
+    TOpts extends CommandOptions = Record<string, never>
+> = {
+    name?: TName;
+    commandArguments?: TArgs;
+    options?: TOpts;
+    action: ActionFn<InferCommandArguments<TArgs>, InferCommandOptions<TOpts>>;
 }

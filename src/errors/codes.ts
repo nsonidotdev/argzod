@@ -8,5 +8,6 @@ export const ErrorCode = {
     InvalidOptionFormat: "invalid-option",
     OptionNotDefined: "option-not-defined",
     CommandNotFound: "command-not-found",
+    CommandDuplication: "command-duplication"
 } as const;
 export type ErrorCode = ObjectValues<typeof ErrorCode>
