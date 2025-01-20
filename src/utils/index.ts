@@ -153,6 +153,5 @@ export const removeObjectKeys = <T extends Record<string, any>, U extends keyof 
     return result;
 }
 
-export const isValidOptionName = (string: string): boolean => {
-    return /^[a-zA-Z0-9-_]+$/.test(string);
-};
+export const isValidOptionName = (string: string) => /^[a-zA-Z0-9-_]+$/.test(string);
+export const isNumericString = (str: string) => /^[0-9]+$/.test(str);

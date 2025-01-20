@@ -1,4 +1,4 @@
-import { countLeadingDashes, isValidOptionName } from ".";
+import { countLeadingDashes, isNumericString, isValidOptionName } from ".";
 import { ArgumentType, OptionVariant } from "../enums";
 import { ArgzodError, ErrorCode } from "../errors";
 import { FormattedCommandString, FormattedOption } from "../types/arguments";
@@ -31,15 +31,20 @@ export class ArgumentFormatter {
                 };
             };
 
+            if (leadingDashesCount === 1 && isNumericString(arg.slice(1))) {
+                // If arg has one dash and consists only from numbers after that dash then treat it as negative number
+                return {
+                    type: ArgumentType.Argument,
+                    value: arg
+                }
+            }
+            
             const optionName = arg.slice(leadingDashesCount);
-
             if (!isValidOptionName(optionName)) {
                 throw new ArgzodError({
                     code: ErrorCode.InvalidOptionName
                 })
             };
-
-            
 
             if (leadingDashesCount === 1) {
                 if (optionName.length === 1) {
