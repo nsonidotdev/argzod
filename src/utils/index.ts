@@ -19,11 +19,11 @@ export const getCommandData = ({ commandLine, commands }: Options) => {
     const indexCommand = commands.find(c => c.name === undefined);
     const targetCommand = namedCommand ?? indexCommand;
 
-    commandLine = targetCommand === indexCommand 
+    commandLine = targetCommand === indexCommand
         ? commandLine
         : commandLine.slice(1)
 
-    
+
 
     if (!targetCommand) {
         throw new ArgzodError({
@@ -41,7 +41,7 @@ export const getCommandData = ({ commandLine, commands }: Options) => {
         throw targetCommandResult.error;
     }
 
-    throw new ArgzodError({ 
+    throw new ArgzodError({
         code: ErrorCode.CommandNotFound,
         message: `Command ${formattedArgs[0]?.value ?? "?"} not found`
     })
@@ -152,3 +152,7 @@ export const removeObjectKeys = <T extends Record<string, any>, U extends keyof 
     }
     return result;
 }
+
+export const isValidOptionName = (string: string): boolean => {
+    return /^[a-zA-Z0-9-_]+$/.test(string);
+};

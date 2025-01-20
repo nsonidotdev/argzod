@@ -1,4 +1,4 @@
-import { countLeadingDashes } from ".";
+import { countLeadingDashes, isValidOptionName } from ".";
 import { ArgumentType, OptionVariant } from "../enums";
 import { ArgzodError, ErrorCode } from "../errors";
 import { FormattedCommandString, FormattedOption } from "../types/arguments";
@@ -31,51 +31,54 @@ export class ArgumentFormatter {
                 };
             };
 
-            const option = this._validateOptionName(arg.slice(leadingDashesCount), leadingDashesCount);
-            return option;
-        })
-    }
+            const optionName = arg.slice(leadingDashesCount);
 
-    private _validateOptionName(optionName: string, leadingDashesCount: number): FormattedOption {
-        const fullName = `${'-'.repeat(leadingDashesCount)}${optionName}`;
-
-        if (leadingDashesCount === 1) {
-            if (optionName.length === 1) {
-                return {
-                    type: ArgumentType.Option,
-                    value: "",
-                    name: optionName,
-                    variant: OptionVariant.Short,
-                    fullName
-                };
-            } else {
+            if (!isValidOptionName(optionName)) {
                 throw new ArgzodError({
-                    code: ErrorCode.InvalidShortOptionFormat,
-                    path: fullName
+                    code: ErrorCode.InvalidOptionName
                 })
-            }
-        }
+            };
 
-        if (leadingDashesCount === 2) {
-            if (optionName.length > 1) {
-                return {
-                    type: ArgumentType.Option,
-                    value: "",
-                    name: optionName,
-                    variant: OptionVariant.Long,
-                    fullName
-                };
-            } else {
-                throw new ArgzodError({
-                    code: ErrorCode.InvalidLongOptionFormat,
-                    path: fullName
-                })
-            }
-        }
+            
 
-        throw new ArgzodError({
-            code: ErrorCode.InvalidLongOptionFormat,
-            path: fullName
+            if (leadingDashesCount === 1) {
+                if (optionName.length === 1) {
+                    return {
+                        type: ArgumentType.Option,
+                        value: "",
+                        name: optionName,
+                        variant: OptionVariant.Short,
+                        fullName: arg
+                    };
+                } else {
+                    throw new ArgzodError({
+                        code: ErrorCode.InvalidShortOptionFormat,
+                        path: arg
+                    })
+                }
+            }
+
+            if (leadingDashesCount === 2) {
+                if (optionName.length > 1) {
+                    return {
+                        type: ArgumentType.Option,
+                        value: "",
+                        name: optionName,
+                        variant: OptionVariant.Long,
+                        fullName: arg
+                    };
+                } else {
+                    throw new ArgzodError({
+                        code: ErrorCode.InvalidLongOptionFormat,
+                        path: arg
+                    })
+                }
+            }
+
+            throw new ArgzodError({
+                code: ErrorCode.InvalidLongOptionFormat,
+                path: arg
+            })
         })
     }
 
