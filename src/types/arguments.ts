@@ -8,6 +8,10 @@ export type FormattedOption = {
     name: string;
     value: string;
     fullName: string;
+    bunled?: {
+        fullName: string;
+        opts: string[]
+    }
 }
 
 export type FormattedArgument = {

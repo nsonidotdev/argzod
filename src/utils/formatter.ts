@@ -20,25 +20,29 @@ export class ArgumentFormatter {
     }
 
     private _format(args: string[]): FormattedCommandString[] {
-        return args.map((arg) => {
+        return args.reduce<FormattedCommandString[]>((acc, arg) => {
             const leadingDashesCount = countLeadingDashes(arg);
 
             if (!leadingDashesCount || leadingDashesCount === arg.length) {
                 // If arg has no dashes or is entirely dashes, treat it as an argument
-                return {
+                acc.push({
                     type: ArgumentType.Argument,
                     value: arg
-                };
+                });
+
+                return acc;
             };
 
             if (leadingDashesCount === 1 && isNumericString(arg.slice(1))) {
                 // If arg has one dash and consists only from numbers after that dash then treat it as negative number
-                return {
+                acc.push({
                     type: ArgumentType.Argument,
                     value: arg
-                }
+                });
+
+                return acc;
             }
-            
+
             const optionName = arg.slice(leadingDashesCount);
             if (!isValidOptionName(optionName)) {
                 throw new ArgzodError({
@@ -48,30 +52,48 @@ export class ArgumentFormatter {
 
             if (leadingDashesCount === 1) {
                 if (optionName.length === 1) {
-                    return {
+                    acc.push({
                         type: ArgumentType.Option,
                         value: "",
                         name: optionName,
                         variant: OptionVariant.Short,
-                        fullName: arg
-                    };
+                        fullName: arg,
+                    });
+
+                    return acc;
+
                 } else {
-                    throw new ArgzodError({
-                        code: ErrorCode.InvalidShortOptionFormat,
-                        path: arg
-                    })
+                    const bunledOptions = optionName.split('');
+
+                    bunledOptions.forEach((opt) => {
+                        acc.push({
+                            type: ArgumentType.Option,
+                            value: "",
+                            name: opt,
+                            variant: OptionVariant.Short,
+                            fullName: `-${opt}`,
+                            bunled: {
+                                fullName: arg,
+                                opts: bunledOptions
+                            },
+                        })
+                    });
+
+                    return acc;
                 }
             }
 
             if (leadingDashesCount === 2) {
                 if (optionName.length > 1) {
-                    return {
+                    acc.push({
                         type: ArgumentType.Option,
                         value: "",
                         name: optionName,
                         variant: OptionVariant.Long,
-                        fullName: arg
-                    };
+                        fullName: arg,
+                    });
+
+                    return acc;
                 } else {
                     throw new ArgzodError({
                         code: ErrorCode.InvalidLongOptionFormat,
@@ -84,7 +106,7 @@ export class ArgumentFormatter {
                 code: ErrorCode.InvalidLongOptionFormat,
                 path: arg
             })
-        })
+        }, [])
     }
 
     private _merge(formattedArguments: FormattedCommandString[]): FormattedCommandString[] {
