@@ -36,7 +36,8 @@ class Program<T extends string> {
 
         commandResult.data.command.run({
             commandArguments: commandResult.data.parsedArguments,
-            options: commandResult.data.parsedOptions
+            options: commandResult.data.parsedOptions,
+            parsedArguments: commandResult.data.commandLine
         });
     };
 

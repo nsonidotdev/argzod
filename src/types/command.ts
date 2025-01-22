@@ -15,6 +15,7 @@ export type ActionData<
 > = {
     options: TOpts;
     commandArguments: TArgs;
+    parsedArguments: FormattedCommandString[];
 }
 
 
