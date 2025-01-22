@@ -11,3 +11,9 @@ export const ArgumentType = {
     Option: "option",
 } as const;
 export type ArgumentType = ObjectValues<typeof ArgumentType>;
+
+export const OptionValueStyle = {
+    Inline: 'inline', // --option=value
+    SpaceSeparated: "space" // --option value
+} as const;
+export type OptionValueStyle = ObjectValues<typeof OptionValueStyle>;

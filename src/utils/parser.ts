@@ -1,5 +1,5 @@
 import { countLeadingDashes, isNumericString, isValidOptionName } from ".";
-import { ArgumentType, OptionVariant } from "../enums";
+import { ArgumentType, OptionValueStyle, OptionVariant } from "../enums";
 import { ArgzodError, ErrorCode } from "../errors";
 import { ParsedArgument, ParsedOption } from "../types/arguments";
 import { ProgramConfig } from "../types/program";
@@ -38,6 +38,34 @@ export class ArgumentParser {
                 acc.push({
                     type: ArgumentType.Argument,
                     value: arg
+                });
+
+                return acc;
+            }
+
+            if (leadingDashesCount === 2 && arg.includes('=')) {
+                // inline options handling
+                const inlineOptionArray = arg.slice(leadingDashesCount).split('=');
+                if (inlineOptionArray.length !== 2) {
+                    throw new ArgzodError({
+                        code: ErrorCode.InvalidInlineOptionFormat
+                    })
+                }
+
+                const [optName, optValue] = inlineOptionArray as [string, string];
+                if (!isValidOptionName(optName)) {
+                    throw new ArgzodError({
+                        code: ErrorCode.InvalidOptionName
+                    })
+                };
+
+                acc.push({
+                    type: ArgumentType.Option,
+                    value: optValue,
+                    name: optName,
+                    variant: OptionVariant.Short,
+                    fullName: `--${optName}`,
+                    valueStyle: OptionValueStyle.Inline
                 });
 
                 return acc;
@@ -114,23 +142,30 @@ export class ArgumentParser {
 
         const mergedArgs: Array<ParsedArgument | null> = formattedArguments.map((arg, index) => {
             if (!optionsStarted) {
+                // identify if positional arguments are over
                 optionsStarted = formattedArguments
                     .slice(0, index + 1)
                     .some(arg => arg.type === ArgumentType.Option);
             }
 
-            // If argument is standing after the option it is value of the option and should be merged to it. So skip this argument 
+            // If argument is standing after the first option it is value of the option and should be merged to it. So skip this argument 
             if (arg.type === ArgumentType.Argument && optionsStarted) {
                 return null
             };
-            
-            // Merge option with its value
+
+            // Merge option with its value (space-separated value style)
             if (arg.type === ArgumentType.Option) {
                 const optionValue = this._getOptionValue(formattedArguments, index);
+                if (optionValue.length && arg.valueStyle) {
+                    throw new ArgzodError({
+                        code: ErrorCode.CanNotCombineOptValueStyles,
+                    });
+                };
 
                 return {
                     ...arg,
-                    value: optionValue
+                    value: arg.value === "" ? optionValue : arg.value,
+                    valueStyle: OptionValueStyle.SpaceSeparated
                 }
             };
 

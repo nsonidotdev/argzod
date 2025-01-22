@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import type { ArgumentType, OptionVariant } from "../enums";
+import type { ArgumentType, OptionValueStyle, OptionVariant } from "../enums";
 
 
 export type ParsedOption = {
@@ -8,6 +8,7 @@ export type ParsedOption = {
     name: string;
     value: string;
     fullName: string;
+    valueStyle?: OptionValueStyle;
     bunled?: {
         fullName: string;
         opts: string[]
