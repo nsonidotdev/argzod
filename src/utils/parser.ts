@@ -15,6 +15,7 @@ export class ArgumentParser {
     public parse(args: string[]): ParsedArgument[] {
         const formattedArgs = this._format(args);
         const mergedArgs = this._merge(formattedArgs);
+        console.log(mergedArgs)
 
         return mergedArgs;
     }
@@ -165,7 +166,9 @@ export class ArgumentParser {
                 return {
                     ...arg,
                     value: arg.value === "" ? optionValue : arg.value,
-                    valueStyle: OptionValueStyle.SpaceSeparated
+                    valueStyle: optionValue.length 
+                        ? OptionValueStyle.SpaceSeparated
+                        : arg.valueStyle
                 }
             };
 
