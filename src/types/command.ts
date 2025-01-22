@@ -1,4 +1,4 @@
-import type { ArgumentDefinition, OptionDefinition, FormattedCommandString } from "./arguments";
+import type { ArgumentDefinition, OptionDefinition, ParsedArgument } from "./arguments";
 import { InferCommandArguments, InferCommandOptions } from "./utils";
 
 export type CommandName<T extends string = string> = undefined | T;
@@ -14,10 +14,9 @@ export type ActionData<
     TOpts extends Record<string, any> = Record<string, any>
 > = {
     options: TOpts;
-    commandArguments: TArgs;
-    parsedArguments: FormattedCommandString[];
+    args: TArgs;
+    parsedCommandLine: ParsedArgument[];
 }
-
 
 export type CommandOptions = Record<string, OptionDefinition>;
 export type CommandArguments = Array<ArgumentDefinition>;
@@ -27,7 +26,7 @@ export type Command<
     TOpts extends CommandOptions = CommandOptions
 > = {
     name: CommandName<string>;
-    run: (arg: ActionData<InferCommandArguments<TArgs>, InferCommandOptions<TOpts>>) => void;
+    action: (arg: ActionData<InferCommandArguments<TArgs>, InferCommandOptions<TOpts>>) => void;
     options: TOpts;
     arguments: TArgs;
 }
@@ -38,7 +37,7 @@ export type CommandDefinition<
     TOpts extends CommandOptions = Record<string, never>
 > = {
     name?: TName;
-    commandArguments?: TArgs;
+    args?: TArgs;
     options?: TOpts;
     action: ActionFn<InferCommandArguments<TArgs>, InferCommandOptions<TOpts>>;
 }

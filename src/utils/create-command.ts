@@ -8,8 +8,8 @@ export const createCommand = <
 ): Command => {
     return {
         name: options.name,
-        arguments: options.commandArguments ?? [],
+        arguments: options.args ?? [],
         options: options.options ?? {},
-        run: options.action as ActionFn,
+        action: options.action as ActionFn,
     };
 }

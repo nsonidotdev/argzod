@@ -1,7 +1,7 @@
-import { FormattedOption, OptionDefinition } from "../types/arguments";
+import { ParsedOption, OptionDefinition } from "../types/arguments";
 import { CommandOptions } from "../types/command";
 
-export const matchOptionDefinition = <T extends string>(option: FormattedOption, definitions: CommandOptions): [T, OptionDefinition] | undefined => {
+export const matchOptionDefinition = <T extends string>(option: ParsedOption, definitions: CommandOptions): [T, OptionDefinition] | undefined => {
     return Object.entries<OptionDefinition>(definitions)
         .find(([key, definition]) => {
             if (typeof definition.name === 'undefined') {

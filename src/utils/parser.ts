@@ -1,26 +1,26 @@
 import { countLeadingDashes, isNumericString, isValidOptionName } from ".";
 import { ArgumentType, OptionVariant } from "../enums";
 import { ArgzodError, ErrorCode } from "../errors";
-import { FormattedCommandString, FormattedOption } from "../types/arguments";
+import { ParsedArgument, ParsedOption } from "../types/arguments";
 import { ProgramConfig } from "../types/program";
 
 
-export class ArgumentFormatter {
+export class ArgumentParser {
     private _config: ProgramConfig;
 
     constructor(config?: ProgramConfig) {
         this._config = config ?? {};
     }
 
-    public format(args: string[]): FormattedCommandString[] {
+    public parse(args: string[]): ParsedArgument[] {
         const formattedArgs = this._format(args);
         const mergedArgs = this._merge(formattedArgs);
 
         return mergedArgs;
     }
 
-    private _format(args: string[]): FormattedCommandString[] {
-        return args.reduce<FormattedCommandString[]>((acc, arg) => {
+    private _format(args: string[]): ParsedArgument[] {
+        return args.reduce<ParsedArgument[]>((acc, arg) => {
             const leadingDashesCount = countLeadingDashes(arg);
 
             if (!leadingDashesCount || leadingDashesCount === arg.length) {
@@ -109,10 +109,10 @@ export class ArgumentFormatter {
         }, [])
     }
 
-    private _merge(formattedArguments: FormattedCommandString[]): FormattedCommandString[] {
+    private _merge(formattedArguments: ParsedArgument[]): ParsedArgument[] {
         let optionsStarted = false;
 
-        const mergedArgs: Array<FormattedCommandString | null> = formattedArguments.map((arg, index) => {
+        const mergedArgs: Array<ParsedArgument | null> = formattedArguments.map((arg, index) => {
             if (!optionsStarted) {
                 optionsStarted = formattedArguments
                     .slice(0, index + 1)
@@ -123,7 +123,7 @@ export class ArgumentFormatter {
             if (arg.type === ArgumentType.Argument && optionsStarted) {
                 return null
             };
-
+            
             // Merge option with its value
             if (arg.type === ArgumentType.Option) {
                 const optionValue = this._getOptionValue(formattedArguments, index);
@@ -140,7 +140,7 @@ export class ArgumentFormatter {
         return mergedArgs.filter(arg => arg != null);
     }
 
-    private _getOptionValue(args: FormattedCommandString[], optionIndex: number): string {
+    private _getOptionValue(args: ParsedArgument[], optionIndex: number): string {
         if (args[optionIndex]?.type !== ArgumentType.Option) {
             throw new ArgzodError({
                 code: ErrorCode.Other,

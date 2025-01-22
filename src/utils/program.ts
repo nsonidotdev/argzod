@@ -34,10 +34,10 @@ class Program<T extends string> {
             process.exit(1);
         }
 
-        commandResult.data.command.run({
-            commandArguments: commandResult.data.parsedArguments,
-            options: commandResult.data.parsedOptions,
-            parsedArguments: commandResult.data.commandLine
+        commandResult.data.command.action({
+            args: commandResult.data.validatedArgs,
+            options: commandResult.data.validatedOptions,
+            parsedCommandLine: commandResult.data.parsedCommandLine
         });
     };
 
@@ -49,9 +49,9 @@ class Program<T extends string> {
     ): Command {
         const command: Command = {
             name: options.name,
-            arguments: options.commandArguments ?? [],
+            arguments: options.args ?? [],
             options: options.options ?? {},
-            run: options.action as ActionFn,
+            action: options.action as ActionFn,
         };
 
         if (this._commands.find(c => c.name === command.name)) {

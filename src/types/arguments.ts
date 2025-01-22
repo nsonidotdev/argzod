@@ -2,7 +2,7 @@ import type { z } from "zod";
 import type { ArgumentType, OptionVariant } from "../enums";
 
 
-export type FormattedOption = {
+export type ParsedOption = {
     type: (typeof ArgumentType)['Option'];
     variant: OptionVariant;
     name: string;
@@ -14,14 +14,14 @@ export type FormattedOption = {
     }
 }
 
-export type FormattedArgument = {
+export type ParsedPositionalArgument = {
     type: (typeof ArgumentType)['Argument'];
     value: string;
 }
 
-export type FormattedCommandString =
-    | FormattedOption
-    | FormattedArgument
+export type ParsedArgument =
+    | ParsedOption
+    | ParsedPositionalArgument
 
 
 export type OptionDefinition = {

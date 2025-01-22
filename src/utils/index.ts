@@ -1,7 +1,7 @@
 import { ArgumentType } from "../enums";
-import { FormattedCommandString, OptionDefinition } from "../types/arguments";
+import { ParsedArgument, OptionDefinition } from "../types/arguments";
 import { Command } from "../types/command";
-import { ArgumentFormatter as ArgumentFormatter } from "./formatter";
+import { ArgumentParser } from "./parser";
 import { matchOptionDefinition, stringifyOptionDefintion } from "./options";
 import { schemas } from "../schemas";
 import { trySync } from "./try";
@@ -13,7 +13,7 @@ type Options = {
     commands: Command[];
 }
 export const getCommandData = ({ commandLine, commands }: Options) => {
-    const argFormatter = new ArgumentFormatter();
+    const parser = new ArgumentParser();
 
     const namedCommand = commands.find(c => c.name === commandLine[0]);
     const indexCommand = commands.find(c => c.name === undefined);
@@ -31,34 +31,34 @@ export const getCommandData = ({ commandLine, commands }: Options) => {
         });
     }
 
-    const formattedCommandLine = argFormatter.format(commandLine);
-    const formattedArgs = formattedCommandLine.filter(arg => arg.type === ArgumentType.Argument);
+    const parsedCommandLine = parser.parse(commandLine);
+    const parsedArgs = parsedCommandLine.filter(arg => arg.type === ArgumentType.Argument);
 
-    const targetCommandResult = trySync(() => parseCommand(targetCommand, formattedCommandLine));
+    const targetCommandResult = trySync(() => parseCommand(targetCommand, parsedCommandLine));
     if (targetCommandResult.success) return targetCommandResult.data;
 
-    if (targetCommand === namedCommand || (targetCommand === indexCommand && targetCommand.arguments.length === formattedArgs.length)) {
+    if (targetCommand === namedCommand || (targetCommand === indexCommand && targetCommand.arguments.length === parsedArgs.length)) {
         throw targetCommandResult.error;
     }
 
     throw new ArgzodError({
         code: ErrorCode.CommandNotFound,
-        message: `Command ${formattedArgs[0]?.value ?? "?"} not found`
+        message: `Command ${parsedArgs[0]?.value ?? "?"} not found`
     })
 }
 
 
 const parseCommand = (
     command: Command,
-    formattedCommandLine: FormattedCommandString[]
+    parsedCommandLine: ParsedArgument[]
 ) => {
-    const formattedArguments = formattedCommandLine.filter(arg => arg.type === ArgumentType.Argument);
-    const formattedOptions = formattedCommandLine.filter(arg => arg.type === ArgumentType.Option);
+    const parsedArgs = parsedCommandLine.filter(arg => arg.type === ArgumentType.Argument);
+    const parsedOptions = parsedCommandLine.filter(arg => arg.type === ArgumentType.Option);
 
-    if (formattedArguments.length > command.arguments.length) throw new Error('Too many arguments');
+    if (parsedArgs.length > command.arguments.length) throw new Error('Too many arguments');
 
-    const parsedArguments = command.arguments.map((argDef, index) => {
-        const argParseResult = argDef.schema.safeParse(formattedArguments[index]?.value);
+    const validatedArgs = command.arguments.map((argDef, index) => {
+        const argParseResult = argDef.schema.safeParse(parsedArgs[index]?.value);
 
         if (!argParseResult.success) {
             throw new ArgzodError({
@@ -73,7 +73,7 @@ const parseCommand = (
         return argParseResult.data;
     });
 
-    let parsedOptions = Object.fromEntries(formattedOptions.map((option) => {
+    let validatedOptions = Object.fromEntries(parsedOptions.map((option) => {
         const matchResult = matchOptionDefinition(option, command.options)
         if (!matchResult) {
             throw new ArgzodError({
@@ -99,8 +99,8 @@ const parseCommand = (
         return [key, parsedValue.data];
     }));
 
-    const notPassedOptionDefinitions = removeObjectKeys(command.options, Object.keys(parsedOptions))
-    const notPassedParsedOptions = Object.fromEntries(
+    const notPassedOptionDefinitions = removeObjectKeys(command.options, Object.keys(validatedOptions))
+    const notPassedValidatedOptions = Object.fromEntries(
         Object.entries<OptionDefinition>(notPassedOptionDefinitions)
             .map(([key, optionDefinition]) => {
                 const parsedValue = (optionDefinition?.schema ?? schemas.flagSchema).safeParse(undefined);
@@ -118,16 +118,16 @@ const parseCommand = (
             })
     );
 
-    parsedOptions = {
-        ...parsedOptions,
-        ...notPassedParsedOptions
+    validatedOptions = {
+        ...validatedOptions,
+        ...notPassedValidatedOptions
     };
 
     return {
         command,
-        parsedArguments,
-        parsedOptions,
-        commandLine: formattedCommandLine
+        validatedArgs,
+        validatedOptions,
+        parsedCommandLine
     }
 }
 
