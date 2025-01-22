@@ -44,9 +44,18 @@ export class ArgumentParser {
                 return acc;
             }
 
-            if (leadingDashesCount === 2 && arg.includes('=')) {
+            if (
+                arg.includes('=') && 
+                (leadingDashesCount === 1 || leadingDashesCount === 2)
+            ) {
                 // inline options handling
                 const inlineOptionArray = arg.slice(leadingDashesCount).split('=');
+                if (leadingDashesCount === 1 || inlineOptionArray.length < 2) {
+                    throw new ArgzodError({
+                        code: ErrorCode.ShortInlineOptionsNotSupported
+                    })
+                }
+
                 if (inlineOptionArray.length !== 2) {
                     throw new ArgzodError({
                         code: ErrorCode.InvalidInlineOptionFormat

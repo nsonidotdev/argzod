@@ -7,6 +7,7 @@ export const ErrorCode = {
     InvalidShortOptionFormat: "invalid-short-option",
     InvalidLongOptionFormat: "invalid-long-option",
     InvalidInlineOptionFormat: "invalid-inline-long-option",
+    ShortInlineOptionsNotSupported: "short-inline-options-not-supported",
     InvalidOptionFormat: "invalid-option",
     CanNotCombineOptValueStyles: "can-not-combine-opt-val-styles",
     OptionNotDefined: "option-not-defined",
