@@ -1,4 +1,4 @@
-import { ObjectValues } from "../types/utils";
+import { ObjectValues } from "./types/utils";
 
 export const OptionVariant = {
     Long: "long",
