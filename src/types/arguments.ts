@@ -6,7 +6,7 @@ export type ParsedOption = {
     type: (typeof ArgumentType)['Option'];
     variant: OptionVariant;
     name: string;
-    value: string;
+    value: string | string[];
     fullName: string;
     valueStyle?: OptionValueStyle;
     bunled?: {

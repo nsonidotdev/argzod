@@ -165,7 +165,7 @@ export class ArgumentParser {
 
             // Merge option with its value (space-separated value style)
             if (arg.type === ArgumentType.Option) {
-                const optionValue = this._getOptionValue(formattedArguments, index);
+                const optionValue = this._getSpaceSeparatedOptionValue(formattedArguments, index);
                 if (optionValue.length && arg.valueStyle) {
                     throw new ArgzodError({
                         code: ErrorCode.CanNotCombineOptValueStyles,
@@ -187,7 +187,7 @@ export class ArgumentParser {
         return mergedArgs.filter(arg => arg != null);
     }
 
-    private _getOptionValue(args: ParsedArgument[], optionIndex: number): string {
+    private _getSpaceSeparatedOptionValue(args: ParsedArgument[], optionIndex: number): string | string[] {
         if (args[optionIndex]?.type !== ArgumentType.Option) {
             throw new ArgzodError({
                 code: ErrorCode.Other,
@@ -209,7 +209,8 @@ export class ArgumentParser {
                     : acc
             }, [])
 
-
-        return values.join(' ');
+        if (values.length === 0) return ''; 
+        if (values.length === 1) return values[0]!; 
+        return values;
     }
 }

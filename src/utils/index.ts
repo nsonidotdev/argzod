@@ -95,7 +95,7 @@ const parseCommand = (
                 const validateOption = (value: string | undefined, path: string) => {
                     const schema = optionDef.schema ?? schemas.flagSchema;
                     const zodResult = schema.safeParse(value);
-            
+
                     if (!zodResult.success) {
                         throw new ArgzodError({
                             code: ErrorCode.ZodParse,
@@ -103,22 +103,37 @@ const parseCommand = (
                             message: zodResult.error.issues.map(i => i.message).join("\n")
                         });
                     }
-            
+
                     return zodResult.data;
                 };
-                
+
                 let validationResult;
-                
+
                 if (matchingOptions.length === 0) {
                     validationResult = validateOption(undefined, stringifyOptionDefintion([key, optionDef]))
                 } else if (matchingOptions.length === 1) {
-                    validationResult = validateOption(matchingOptions[0]!.value, matchingOptions[0]!.fullName)
+                    const option = matchingOptions[0]!;
+                    if (typeof option.value === 'string') {
+                        validationResult = validateOption(option.value, option.fullName)
+                    } else {
+                        validationResult = option.value.map(val => {
+                            return validateOption(val, option.fullName)
+                        })
+                    }
                 } else {
-                    validationResult = matchingOptions.map(opt => {
-                        return validateOption(opt.value, opt.fullName)
-                    })
+                    validationResult = matchingOptions
+                        .map(option => {
+                            if (typeof option.value === 'string') {
+                                return validateOption(option.value, option.fullName)
+                            } else {
+                                return option.value.map(val => {
+                                    return validateOption(val, option.fullName)
+                                })
+                            }
+                        })
+                        .flat()
                 }
-                
+
                 return [key, validationResult]
             })
     )
