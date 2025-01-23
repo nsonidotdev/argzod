@@ -2,7 +2,7 @@ import { ArgumentType } from "../enums";
 import { ParsedArgument, OptionDefinition } from "../types/arguments";
 import { Command } from "../types/command";
 import { ArgumentParser } from "./parser";
-import { matchOptionDefinition, stringifyOptionDefintion } from "./options";
+import { matchOptionDefinitionByParsedOption, matchParsedOptionsByDefinition, stringifyOptionDefintion } from "./options";
 import { schemas } from "../schemas";
 import { trySync } from "./try";
 import { ArgzodError, ErrorCode } from "../errors";
@@ -73,55 +73,55 @@ const parseCommand = (
         return argParseResult.data;
     });
 
-    let validatedOptions = Object.fromEntries(parsedOptions.map((option) => {
-        const matchResult = matchOptionDefinition(option, command.options)
-        if (!matchResult) {
+
+    // Handle not defined options
+    parsedOptions.some(opt => {
+        const result = matchOptionDefinitionByParsedOption(opt, command.options);
+
+        if (!result) {
             throw new ArgzodError({
                 code: ErrorCode.OptionNotDefined,
-                path: option.fullName
+                path: opt.fullName
             });
         };
+    })
 
-        const [key, optionDefinition] = matchResult
 
-        const parsedValue = (optionDefinition.schema ?? schemas.flagSchema).safeParse(option.value);
+    const validatedOptions = Object.fromEntries(
+        Object.entries(command.options)
+            .map(([key, optionDef]) => {
+                const matchingOptions = matchParsedOptionsByDefinition([key, optionDef], parsedOptions);
 
-        if (!parsedValue.success) {
-            throw new ArgzodError({
-                code: ErrorCode.ZodParse,
-                path: option.fullName,
-                message: parsedValue.error.issues
-                    .map(i => i.message)
-                    .join("\n")
-            })
-        }
-
-        return [key, parsedValue.data];
-    }));
-
-    const notPassedOptionDefinitions = removeObjectKeys(command.options, Object.keys(validatedOptions))
-    const notPassedValidatedOptions = Object.fromEntries(
-        Object.entries<OptionDefinition>(notPassedOptionDefinitions)
-            .map(([key, optionDefinition]) => {
-                const parsedValue = (optionDefinition?.schema ?? schemas.flagSchema).safeParse(undefined);
-                if (!parsedValue.success) {
-                    throw new ArgzodError({
-                        code: ErrorCode.ZodParse,
-                        path: stringifyOptionDefintion([key, optionDefinition]),
-                        message: parsedValue.error.issues
-                            .map(i => i.message)
-                            .join("\n")
+                const validateOption = (value: string | undefined, path: string) => {
+                    const schema = optionDef.schema ?? schemas.flagSchema;
+                    const zodResult = schema.safeParse(value);
+            
+                    if (!zodResult.success) {
+                        throw new ArgzodError({
+                            code: ErrorCode.ZodParse,
+                            path,
+                            message: zodResult.error.issues.map(i => i.message).join("\n")
+                        });
+                    }
+            
+                    return zodResult.data;
+                };
+                
+                let validationResult;
+                
+                if (matchingOptions.length === 0) {
+                    validationResult = validateOption(undefined, stringifyOptionDefintion([key, optionDef]))
+                } else if (matchingOptions.length === 1) {
+                    validationResult = validateOption(matchingOptions[0]!.value, matchingOptions[0]!.fullName)
+                } else {
+                    validationResult = matchingOptions.map(opt => {
+                        return validateOption(opt.value, opt.fullName)
                     })
                 }
-
-                return [key, parsedValue.data];
+                
+                return [key, validationResult]
             })
-    );
-
-    validatedOptions = {
-        ...validatedOptions,
-        ...notPassedValidatedOptions
-    };
+    )
 
     return {
         command,

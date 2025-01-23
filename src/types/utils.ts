@@ -8,7 +8,7 @@ export type InferCommandArguments<TArgs extends CommandArguments> = {
 
 export type InferCommandOptions<TOpts extends CommandOptions> = {
     [K in keyof TOpts]: TOpts[K]['schema'] extends z.ZodType<any> 
-        ? z.infer<TOpts[K]['schema']>
+        ? z.infer<TOpts[K]['schema']> | Array<z.infer<TOpts[K]['schema']>>
         : boolean;
 };
 
