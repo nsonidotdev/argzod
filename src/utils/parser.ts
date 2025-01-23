@@ -50,7 +50,7 @@ export class ArgumentParser {
             ) {
                 // inline options handling
                 const inlineOptionArray = arg.slice(leadingDashesCount).split('=');
-                if (leadingDashesCount === 1 || inlineOptionArray.length < 2) {
+                if (leadingDashesCount === 1 || (inlineOptionArray[0]?.length ?? 0) < 2) {
                     throw new ArgzodError({
                         code: ErrorCode.ShortInlineOptionsNotSupported
                     })
