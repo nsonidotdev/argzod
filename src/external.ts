@@ -5,4 +5,4 @@ export * from './types/command';
 export * from './types/arguments';
 export * from './utils/program';
 export * from './utils/create-command';
-export * from './enums'
+export * from './enums';

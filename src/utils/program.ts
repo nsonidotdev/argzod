@@ -1,4 +1,10 @@
-import { Command, CommandArguments, CommandOptions, CommandName, ActionFn, CommandDefinition } from '../types/command'
+import {
+    Command,
+    CommandArguments,
+    CommandOptions,
+    ActionFn,
+    CommandDefinition,
+} from '../types/command';
 import { z } from 'zod';
 import { trySync } from '../utils/try';
 import { getCommandData } from '../utils';
@@ -14,10 +20,12 @@ class Program<T extends string> {
     }
 
     run(args: string[] = process.argv.slice(2)) {
-        const commandResult = trySync(() => getCommandData({
-            commandLine: args,
-            commands: this._commands
-        }));
+        const commandResult = trySync(() =>
+            getCommandData({
+                commandLine: args,
+                commands: this._commands,
+            })
+        );
 
         if (!commandResult.success) {
             if (commandResult.error instanceof ArgzodError) {
@@ -25,10 +33,13 @@ class Program<T extends string> {
             }
 
             if (commandResult.error instanceof z.ZodError) {
-                console.error(commandResult.error.issues
-                    .map(i => { i.message })
-                    .join("\n")
-                )
+                console.error(
+                    commandResult.error.issues
+                        .map((i) => {
+                            i.message;
+                        })
+                        .join('\n')
+                );
             }
 
             process.exit(1);
@@ -37,16 +48,14 @@ class Program<T extends string> {
         commandResult.data.command.action({
             args: commandResult.data.validatedArgs,
             options: commandResult.data.validatedOptions,
-            parsedCommandLine: commandResult.data.parsedCommandLine
+            parsedCommandLine: commandResult.data.parsedCommandLine,
         });
-    };
+    }
 
     command<
         const TArgs extends CommandArguments,
-        const TOpts extends CommandOptions
-    >(
-        options: CommandDefinition<T, TArgs, TOpts>
-    ): Command {
+        const TOpts extends CommandOptions,
+    >(options: CommandDefinition<T, TArgs, TOpts>): Command {
         const command: Command = {
             name: options.name,
             arguments: options.args ?? [],
@@ -54,26 +63,26 @@ class Program<T extends string> {
             action: options.action as ActionFn,
         };
 
-        if (this._commands.find(c => c.name === command.name)) {
+        if (this._commands.find((c) => c.name === command.name)) {
             throw new ArgzodError({
-                code: ErrorCode.CommandDuplication
+                code: ErrorCode.CommandDuplication,
             });
         }
 
         this._commands.push(command as Command);
 
         return command;
-    };
+    }
 
     attachCommand(command: Command) {
-        if (this._commands.find(c => c.name === command.name)) {
+        if (this._commands.find((c) => c.name === command.name)) {
             throw new ArgzodError({
-                code: ErrorCode.CommandDuplication
+                code: ErrorCode.CommandDuplication,
             });
         }
 
         this._commands.push(command as Command);
-        
+
         return this;
     }
 }

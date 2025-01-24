@@ -1,9 +1,8 @@
-import { countLeadingDashes, isNumericString, isValidOptionName } from ".";
-import { ArgumentType, OptionValueStyle, OptionVariant } from "../enums";
-import { ArgzodError, ErrorCode } from "../errors";
-import { ParsedArgument, ParsedOption } from "../types/arguments";
-import { ProgramConfig } from "../types/program";
-
+import { countLeadingDashes, isNumericString, isValidOptionName } from '.';
+import { ArgumentType, OptionValueStyle, OptionVariant } from '../enums';
+import { ArgzodError, ErrorCode } from '../errors';
+import { ParsedArgument } from '../types/arguments';
+import { ProgramConfig } from '../types/program';
 
 export class ArgumentParser {
     private _config: ProgramConfig;
@@ -15,7 +14,7 @@ export class ArgumentParser {
     public parse(args: string[]): ParsedArgument[] {
         const formattedArgs = this._format(args);
         const mergedArgs = this._merge(formattedArgs);
-        console.log(mergedArgs)
+        console.log(mergedArgs);
 
         return mergedArgs;
     }
@@ -28,46 +27,54 @@ export class ArgumentParser {
                 // If arg has no dashes or is entirely dashes, treat it as an argument
                 acc.push({
                     type: ArgumentType.Argument,
-                    value: arg
+                    value: arg,
                 });
 
                 return acc;
-            };
+            }
 
             if (leadingDashesCount === 1 && isNumericString(arg.slice(1))) {
                 // If arg has one dash and consists only from numbers after that dash then treat it as negative number
                 acc.push({
                     type: ArgumentType.Argument,
-                    value: arg
+                    value: arg,
                 });
 
                 return acc;
             }
 
             if (
-                arg.includes('=') && 
+                arg.includes('=') &&
                 (leadingDashesCount === 1 || leadingDashesCount === 2)
             ) {
                 // inline options handling
-                const inlineOptionArray = arg.slice(leadingDashesCount).split('=');
-                if (leadingDashesCount === 1 || (inlineOptionArray[0]?.length ?? 0) < 2) {
+                const inlineOptionArray = arg
+                    .slice(leadingDashesCount)
+                    .split('=');
+                if (
+                    leadingDashesCount === 1 ||
+                    (inlineOptionArray[0]?.length ?? 0) < 2
+                ) {
                     throw new ArgzodError({
-                        code: ErrorCode.ShortInlineOptionsNotSupported
-                    })
+                        code: ErrorCode.ShortInlineOptionsNotSupported,
+                    });
                 }
 
                 if (inlineOptionArray.length !== 2) {
                     throw new ArgzodError({
-                        code: ErrorCode.InvalidInlineOptionFormat
-                    })
+                        code: ErrorCode.InvalidInlineOptionFormat,
+                    });
                 }
 
-                const [optName, optValue] = inlineOptionArray as [string, string];
+                const [optName, optValue] = inlineOptionArray as [
+                    string,
+                    string,
+                ];
                 if (!isValidOptionName(optName)) {
                     throw new ArgzodError({
-                        code: ErrorCode.InvalidOptionName
-                    })
-                };
+                        code: ErrorCode.InvalidOptionName,
+                    });
+                }
 
                 acc.push({
                     type: ArgumentType.Option,
@@ -75,7 +82,7 @@ export class ArgumentParser {
                     name: optName,
                     variant: OptionVariant.Short,
                     fullName: `--${optName}`,
-                    valueStyle: OptionValueStyle.Inline
+                    valueStyle: OptionValueStyle.Inline,
                 });
 
                 return acc;
@@ -84,37 +91,36 @@ export class ArgumentParser {
             const optionName = arg.slice(leadingDashesCount);
             if (!isValidOptionName(optionName)) {
                 throw new ArgzodError({
-                    code: ErrorCode.InvalidOptionName
-                })
-            };
+                    code: ErrorCode.InvalidOptionName,
+                });
+            }
 
             if (leadingDashesCount === 1) {
                 if (optionName.length === 1) {
                     acc.push({
                         type: ArgumentType.Option,
-                        value: "",
+                        value: '',
                         name: optionName,
                         variant: OptionVariant.Short,
                         fullName: arg,
                     });
 
                     return acc;
-
                 } else {
                     const bunledOptions = optionName.split('');
 
                     bunledOptions.forEach((opt) => {
                         acc.push({
                             type: ArgumentType.Option,
-                            value: "",
+                            value: '',
                             name: opt,
                             variant: OptionVariant.Short,
                             fullName: `-${opt}`,
                             bunled: {
                                 fullName: arg,
-                                opts: bunledOptions
+                                opts: bunledOptions,
                             },
-                        })
+                        });
                     });
 
                     return acc;
@@ -125,7 +131,7 @@ export class ArgumentParser {
                 if (optionName.length > 1) {
                     acc.push({
                         type: ArgumentType.Option,
-                        value: "",
+                        value: '',
                         name: optionName,
                         variant: OptionVariant.Long,
                         fullName: arg,
@@ -135,64 +141,73 @@ export class ArgumentParser {
                 } else {
                     throw new ArgzodError({
                         code: ErrorCode.InvalidLongOptionFormat,
-                        path: arg
-                    })
+                        path: arg,
+                    });
                 }
             }
 
             throw new ArgzodError({
                 code: ErrorCode.InvalidLongOptionFormat,
-                path: arg
-            })
-        }, [])
+                path: arg,
+            });
+        }, []);
     }
 
     private _merge(formattedArguments: ParsedArgument[]): ParsedArgument[] {
         let optionsStarted = false;
 
-        const mergedArgs: Array<ParsedArgument | null> = formattedArguments.map((arg, index) => {
-            if (!optionsStarted) {
-                // identify if positional arguments are over
-                optionsStarted = formattedArguments
-                    .slice(0, index + 1)
-                    .some(arg => arg.type === ArgumentType.Option);
-            }
-
-            // If argument is standing after the first option it is value of the option and should be merged to it. So skip this argument 
-            if (arg.type === ArgumentType.Argument && optionsStarted) {
-                return null
-            };
-
-            // Merge option with its value (space-separated value style)
-            if (arg.type === ArgumentType.Option) {
-                const optionValue = this._getSpaceSeparatedOptionValue(formattedArguments, index);
-                if (optionValue.length && arg.valueStyle) {
-                    throw new ArgzodError({
-                        code: ErrorCode.CanNotCombineOptValueStyles,
-                    });
-                };
-
-                return {
-                    ...arg,
-                    value: arg.value === "" ? optionValue : arg.value,
-                    valueStyle: optionValue.length 
-                        ? OptionValueStyle.SpaceSeparated
-                        : arg.valueStyle
+        const mergedArgs: Array<ParsedArgument | null> = formattedArguments.map(
+            (arg, index) => {
+                if (!optionsStarted) {
+                    // identify if positional arguments are over
+                    optionsStarted = formattedArguments
+                        .slice(0, index + 1)
+                        .some((arg) => arg.type === ArgumentType.Option);
                 }
-            };
 
-            return arg;
-        }, [])
+                // If argument is standing after the first option it is value of the option and should be merged to it. So skip this argument
+                if (arg.type === ArgumentType.Argument && optionsStarted) {
+                    return null;
+                }
 
-        return mergedArgs.filter(arg => arg != null);
+                // Merge option with its value (space-separated value style)
+                if (arg.type === ArgumentType.Option) {
+                    const optionValue = this._getSpaceSeparatedOptionValue(
+                        formattedArguments,
+                        index
+                    );
+                    if (optionValue.length && arg.valueStyle) {
+                        throw new ArgzodError({
+                            code: ErrorCode.CanNotCombineOptValueStyles,
+                        });
+                    }
+
+                    return {
+                        ...arg,
+                        value: arg.value === '' ? optionValue : arg.value,
+                        valueStyle: optionValue.length
+                            ? OptionValueStyle.SpaceSeparated
+                            : arg.valueStyle,
+                    };
+                }
+
+                return arg;
+            },
+            []
+        );
+
+        return mergedArgs.filter((arg) => arg != null);
     }
 
-    private _getSpaceSeparatedOptionValue(args: ParsedArgument[], optionIndex: number): string | string[] {
+    private _getSpaceSeparatedOptionValue(
+        args: ParsedArgument[],
+        optionIndex: number
+    ): string | string[] {
         if (args[optionIndex]?.type !== ArgumentType.Option) {
             throw new ArgzodError({
                 code: ErrorCode.Other,
-                message: "Internal error"
-            })
+                message: 'Internal error',
+            });
         }
 
         let shouldIterate = true;
@@ -200,17 +215,17 @@ export class ArgumentParser {
             .slice(optionIndex + 1)
             .reduce<string[]>((acc, arg) => {
                 if (arg.type === ArgumentType.Option) {
-                    shouldIterate = false
+                    shouldIterate = false;
                 }
                 if (!shouldIterate) return acc;
 
                 return arg.type === ArgumentType.Argument
                     ? acc.concat(arg.value)
-                    : acc
-            }, [])
+                    : acc;
+            }, []);
 
-        if (values.length === 0) return ''; 
-        if (values.length === 1) return values[0]!; 
+        if (values.length === 0) return '';
+        if (values.length === 1) return values[0]!;
         return values;
     }
 }

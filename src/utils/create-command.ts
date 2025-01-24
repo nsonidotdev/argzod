@@ -1,10 +1,16 @@
-import { ActionFn, Command, CommandArguments, CommandDefinition, CommandName, CommandOptions } from '../types/command'
+import {
+    ActionFn,
+    Command,
+    CommandArguments,
+    CommandDefinition,
+    CommandOptions,
+} from '../types/command';
 
 export const createCommand = <
     const TArgs extends CommandArguments = CommandArguments,
-    const TOpts extends CommandOptions = CommandOptions
+    const TOpts extends CommandOptions = CommandOptions,
 >(
-    options: CommandDefinition<string, TArgs, TOpts>,
+    options: CommandDefinition<string, TArgs, TOpts>
 ): Command => {
     return {
         name: options.name,
@@ -12,4 +18,4 @@ export const createCommand = <
         options: options.options ?? {},
         action: options.action as ActionFn,
     };
-}
+};
