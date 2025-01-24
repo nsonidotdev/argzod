@@ -32,6 +32,9 @@ importers:
       eslint-plugin-import:
         specifier: ^2.31.0
         version: 2.31.0(@typescript-eslint/parser@8.21.0(eslint@9.18.0)(typescript@5.7.2))(eslint@9.18.0)
+      eslint-plugin-prefer-arrow:
+        specifier: ^1.2.3
+        version: 1.2.3(eslint@9.18.0)
       eslint-plugin-prettier:
         specifier: ^5.2.3
         version: 5.2.3(eslint-config-prettier@10.0.1(eslint@9.18.0))(eslint@9.18.0)(prettier@3.4.2)
@@ -1058,6 +1061,11 @@ packages:
     peerDependenciesMeta:
       '@typescript-eslint/parser':
         optional: true
+
+  eslint-plugin-prefer-arrow@1.2.3:
+    resolution: {integrity: sha512-J9I5PKCOJretVuiZRGvPQxCbllxGAV/viI20JO3LYblAodofBxyMnZAJ+WGeClHgANnSJberTNoFWWjrWKBuXQ==}
+    peerDependencies:
+      eslint: '>=2.0.0'
 
   eslint-plugin-prettier@5.2.3:
     resolution: {integrity: sha512-qJ+y0FfCp/mQYQ/vWQ3s7eUlFEL4PyKfAJxsnYTJ4YT73nsJBWqmEpFryxV9OeUiqmsTsYJ5Y+KDNaeP31wrRw==}
@@ -3216,6 +3224,10 @@ snapshots:
       - eslint-import-resolver-typescript
       - eslint-import-resolver-webpack
       - supports-color
+
+  eslint-plugin-prefer-arrow@1.2.3(eslint@9.18.0):
+    dependencies:
+      eslint: 9.18.0
 
   eslint-plugin-prettier@5.2.3(eslint-config-prettier@10.0.1(eslint@9.18.0))(eslint@9.18.0)(prettier@3.4.2):
     dependencies:

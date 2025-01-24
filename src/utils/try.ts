@@ -32,7 +32,7 @@ export const tryAsync = async <T>(
     }
 };
 
-export function trySync<T>(dataSource: () => T): Result<T> {
+export const trySync = <T>(dataSource: () => T): Result<T> => {
     try {
         return {
             data: dataSource(),
