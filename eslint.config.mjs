@@ -24,7 +24,7 @@ export default [
             },
         },
         plugins: {
-            tsEslintPlugin,
+            '@typescript-eslint': tsEslintPlugin,
             importPlugin,
             noUnusedImportsPlugin,
             prettier: eslintPluginPrettier,
@@ -33,14 +33,17 @@ export default [
         rules: {
             'no-redeclare': 0, // For enum declarations
 
-            // use tsElsintPlugin plugin for better typescript compatibility
-            'no-unused-vars': 0,
-            'tsEslintPlugin/no-unused-vars': 'warn',
+            'no-unused-vars': 0, // use @typescript-eslint/no-unused-vars plugin for better typescript compatibility
+
+            /** @see {@link https://typescript-eslint.io/rules/} */
+            '@typescript-eslint/no-unused-vars': 1,
+            '@typescript-eslint/consistent-type-imports': 1,
+            '@typescript-eslint/consistent-type-definitions': [2, "type"],
 
             'prefer-arrow/prefer-arrow-functions': [
-                'warn',
+                1,
                 {
-					allowStandaloneDeclarations: false,
+                    allowStandaloneDeclarations: false,
                     classPropertiesAllowed: false, // class methods don't have to be arrow functions
                 },
             ],
