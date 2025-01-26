@@ -1,5 +1,5 @@
-import { ParsedOption, OptionDefinition } from '../types/arguments';
-import { CommandOptions } from '../types/command';
+import type { ParsedOption, OptionDefinition } from '../types/arguments';
+import type { CommandOptions } from '../types/command';
 
 export const matchOptionDefinitionByParsedOption = <T extends string>(
     option: ParsedOption,
@@ -12,10 +12,7 @@ export const matchOptionDefinitionByParsedOption = <T extends string>(
             } else if (typeof definition.name === 'string') {
                 return definition.name === option.name;
             } else {
-                return (
-                    definition.name.long === option.name ||
-                    definition.name.short === option.name
-                );
+                return definition.name.some((name) => name === option.name);
             }
         }
     ) as [T, OptionDefinition] | undefined;
@@ -32,8 +29,7 @@ export const matchParsedOptionsByDefinition = (
     } else if (typeof definition.name === 'string') {
         definitionNames.push(definition.name);
     } else {
-        if (definition.name.short) definitionNames.push(definition.name.short);
-        if (definition.name.long) definitionNames.push(definition.name.long);
+        definitionNames.push(...definition.name);
     }
 
     return parsedOptions.filter((opt) => {
@@ -47,15 +43,14 @@ export const stringifyOptionDefintion = ([key, defintion]: [
 ]): string => {
     const isLong = (option: string) => option.length > 1;
 
-    if (typeof defintion.name === 'undefined') {
-        return isLong(key) ? '--' + key : '-' + key;
-    } else if (typeof defintion.name === 'string') {
+    if (typeof defintion.name === 'string') {
         return isLong(defintion.name)
             ? '--' + defintion.name
             : '-' + defintion.name;
+    } else if (defintion.name instanceof Array && defintion.name.length > 0) {
+        const name = defintion.name[0]!;
+        return isLong(name) ? '--' + name : '-' + name;
     } else {
-        return defintion.name.long
-            ? '--' + defintion.name.long
-            : '-' + defintion.name.short;
+        return isLong(key) ? '--' + key : '-' + key;
     }
 };
