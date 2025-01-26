@@ -1,5 +1,11 @@
 # argzod
 
+## 0.4.2
+
+### Patch Changes
+
+- dcd4ec2: Republish due to missing build in 0.4.1
+
 ## 0.4.1
 
 ### Patch Changes
