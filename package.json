@@ -20,7 +20,8 @@
 		"lint": "eslint --cache ./src",
 		"lint:fix": "eslint --cache --fix ./src",
 		"check-exports": "attw --pack .",
-		"play": "nodemon --watch . -e ts -x tsx playground"
+		"play": "nodemon --watch . -e ts -x tsx playground",
+		"types:check": "tsc --project tsconfig.json"
 	},
 	"keywords": [
 		"cli",

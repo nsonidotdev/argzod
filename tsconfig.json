@@ -10,6 +10,6 @@
     "noEmit": true
   },
   "exclude": [
-    "./src/playground"
+    "./playground.ts"
   ]
 }
