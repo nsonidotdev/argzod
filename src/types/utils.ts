@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import { CommandArguments, CommandOptions } from './command';
+import type { CommandArguments, CommandOptions } from './command';
 
 export type InferCommandArguments<TArgs extends CommandArguments> = {
     [K in keyof TArgs]: z.infer<TArgs[K]['schema']>;

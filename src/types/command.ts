@@ -3,7 +3,7 @@ import type {
     OptionDefinition,
     ParsedArgument,
 } from './arguments';
-import { InferCommandArguments, InferCommandOptions } from './utils';
+import type { InferCommandArguments, InferCommandOptions } from './utils';
 
 export type CommandName<T extends string = string> = undefined | T;
 

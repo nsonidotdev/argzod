@@ -1,8 +1,8 @@
 import { countLeadingDashes, isNumericString, isValidOptionName } from '.';
 import { ArgumentType, OptionValueStyle, OptionVariant } from '../enums';
 import { ArgzodError, ErrorCode } from '../errors';
-import { ParsedArgument } from '../types/arguments';
-import { ProgramConfig } from '../types/program';
+import type { ParsedArgument } from '../types/arguments';
+import type { ProgramConfig } from '../types/program';
 
 export class ArgumentParser {
     private _config: ProgramConfig;

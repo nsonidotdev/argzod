@@ -1,4 +1,4 @@
-import { ObjectValues } from '../types/utils';
+import type { ObjectValues } from '../types/utils';
 
 export const ErrorCode = {
     Other: 'other',

@@ -1,6 +1,6 @@
 import { ArgumentType } from '../enums';
-import { ParsedArgument } from '../types/arguments';
-import { Command } from '../types/command';
+import type { ParsedArgument } from '../types/arguments';
+import type { Command } from '../types/command';
 import { ArgumentParser } from './parser';
 import {
     matchOptionDefinitionByParsedOption,
@@ -10,7 +10,7 @@ import {
 import { schemas } from '../schemas';
 import { trySync } from './try';
 import { ArgzodError, ErrorCode } from '../errors';
-import { z } from 'zod';
+import type { z } from 'zod';
 
 type Options = {
     commandLine: string[];

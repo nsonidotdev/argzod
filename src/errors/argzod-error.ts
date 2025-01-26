@@ -1,4 +1,4 @@
-import { ErrorCode } from './codes';
+import type { ErrorCode } from './codes';
 import { errorMessageMap } from './messages';
 
 export class ArgzodError extends Error {
