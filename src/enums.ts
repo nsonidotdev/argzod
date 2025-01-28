@@ -15,5 +15,6 @@ export type ArgumentType = ObjectValues<typeof ArgumentType>;
 export const OptionValueStyle = {
     Inline: 'inline', // --option=value
     SpaceSeparated: 'space', // --option value
+    Attached: 'attached' // -ovalue
 } as const;
 export type OptionValueStyle = ObjectValues<typeof OptionValueStyle>;

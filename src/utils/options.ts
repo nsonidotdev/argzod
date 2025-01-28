@@ -1,18 +1,18 @@
 import type { ParsedOption, OptionDefinition } from '../types/arguments';
 import type { CommandOptions } from '../types/command';
 
-export const matchOptionDefinitionByParsedOption = <T extends string>(
-    option: ParsedOption,
+export const matchOptionDefinitionByOptionName = <T extends string>(
+    option: string,
     definitions: CommandOptions
 ): [T, OptionDefinition] | undefined => {
     return Object.entries<OptionDefinition>(definitions).find(
         ([key, definition]) => {
             if (typeof definition.name === 'undefined') {
-                return key === option.name;
+                return key === option;
             } else if (typeof definition.name === 'string') {
-                return definition.name === option.name;
+                return definition.name === option;
             } else {
-                return definition.name.some((name) => name === option.name);
+                return definition.name.some((name) => name === option);
             }
         }
     ) as [T, OptionDefinition] | undefined;

@@ -1,20 +1,20 @@
 import { countLeadingDashes, isNumericString, isValidOptionName } from '.';
 import { ArgumentType, OptionValueStyle, OptionVariant } from '../enums';
 import { ArgzodError, ErrorCode } from '../errors';
+import type { Command } from '../types/command';
 import type { ParsedArgument } from '../types/arguments';
-import type { ProgramConfig } from '../types/program';
+import { matchOptionDefinitionByOptionName } from './options';
 
 export class ArgumentParser {
-    private _config: ProgramConfig;
+    private _command: Command;
 
-    constructor(config?: ProgramConfig) {
-        this._config = config ?? {};
+    constructor(command: Command) {
+        this._command = command;
     }
 
     public parse(args: string[]): ParsedArgument[] {
         const formattedArgs = this._format(args);
         const mergedArgs = this._merge(formattedArgs);
-        console.log(mergedArgs);
 
         return mergedArgs;
     }
@@ -106,25 +106,55 @@ export class ArgumentParser {
                     });
 
                     return acc;
-                } else {
-                    const bunledOptions = optionName.split('');
+                }
 
-                    bunledOptions.forEach((opt) => {
-                        acc.push({
-                            type: ArgumentType.Option,
-                            value: '',
-                            name: opt,
-                            variant: OptionVariant.Short,
-                            fullName: `-${opt}`,
-                            bunled: {
-                                fullName: arg,
-                                opts: bunledOptions,
-                            },
-                        });
+                // Option bunling handling
+                const bunledOptions = optionName.split('');
+
+                const attachedName = optionName.slice(0, 1);
+                const attachedValue = optionName.slice(1);
+
+                const isAttachedNameDefined: boolean =
+                    !!matchOptionDefinitionByOptionName(
+                        attachedName,
+                        this._command.options
+                    );
+
+                const isEveryOptionDefined = bunledOptions.every((option) => {
+                    return matchOptionDefinitionByOptionName(
+                        option,
+                        this._command.options
+                    );
+                });
+
+                if (!isEveryOptionDefined && isAttachedNameDefined) {
+                    acc.push({
+                        name: attachedName,
+                        fullName: `-${attachedName}`,
+                        type: ArgumentType.Option,
+                        value: attachedValue,
+                        variant: OptionVariant.Short,
+                        valueStyle: OptionValueStyle.Attached,
                     });
 
                     return acc;
                 }
+
+                bunledOptions.forEach((opt) => {
+                    acc.push({
+                        type: ArgumentType.Option,
+                        value: '',
+                        name: opt,
+                        variant: OptionVariant.Short,
+                        fullName: `-${opt}`,
+                        bunled: {
+                            fullName: arg,
+                            opts: bunledOptions,
+                        },
+                    });
+                });
+
+                return acc;
             }
 
             if (leadingDashesCount === 2) {

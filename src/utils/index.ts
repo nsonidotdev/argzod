@@ -3,7 +3,7 @@ import type { ParsedArgument } from '../types/arguments';
 import type { Command } from '../types/command';
 import { ArgumentParser } from './parser';
 import {
-    matchOptionDefinitionByParsedOption,
+    matchOptionDefinitionByOptionName,
     matchParsedOptionsByDefinition,
     stringifyOptionDefintion,
 } from './options';
@@ -17,8 +17,6 @@ type Options = {
     commands: Command[];
 };
 export const getCommandData = ({ commandLine, commands }: Options) => {
-    const parser = new ArgumentParser();
-
     const namedCommand = commands.find((c) => c.name === commandLine[0]);
     const indexCommand = commands.find((c) => c.name === undefined);
     const targetCommand = namedCommand ?? indexCommand;
@@ -32,6 +30,7 @@ export const getCommandData = ({ commandLine, commands }: Options) => {
         });
     }
 
+    const parser = new ArgumentParser(targetCommand);
     const parsedCommandLine = parser.parse(commandLine);
     const parsedArgs = parsedCommandLine.filter(
         (arg) => arg.type === ArgumentType.Argument
@@ -90,10 +89,11 @@ const parseCommand = (
 
     // Handle not defined options
     parsedOptions.some((opt) => {
-        const result = matchOptionDefinitionByParsedOption(
-            opt,
+        const result = matchOptionDefinitionByOptionName(
+            opt.name,
             command.options
         );
+
 
         if (!result) {
             throw new ArgzodError({
