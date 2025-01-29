@@ -15,7 +15,7 @@ export class ArgumentParser {
     public parse(args: string[]): ParsedArgument[] {
         const formattedArgs = this._format(args);
         const mergedArgs = this._merge(formattedArgs);
-
+        console.log(mergedArgs);
         return mergedArgs;
     }
 
@@ -109,38 +109,54 @@ export class ArgumentParser {
                 }
 
                 // Option bunling handling
-                const bunledOptions = optionName.split('');
+                const shortOptionsArray = optionName.split('');
 
-                const attachedName = optionName.slice(0, 1);
-                const attachedValue = optionName.slice(1);
+                const isEveryOptionDefined = shortOptionsArray.every(
+                    (option) => {
+                        return matchOptionDefinitionByOptionName(
+                            option,
+                            this._command.options
+                        );
+                    }
+                );
 
-                const isAttachedNameDefined: boolean =
-                    !!matchOptionDefinitionByOptionName(
-                        attachedName,
-                        this._command.options
-                    );
+                if (!isEveryOptionDefined) {
+                    const firstUndefinedOptionIndex =
+                        shortOptionsArray.findIndex((optName) => {
+                            return !matchOptionDefinitionByOptionName(
+                                optName,
+                                this._command.options
+                            );
+                        });
 
-                const isEveryOptionDefined = bunledOptions.every((option) => {
-                    return matchOptionDefinitionByOptionName(
-                        option,
-                        this._command.options
-                    );
-                });
+                    // first undefined option (value start index) should be at least second by its index so there is option name
+                    if (firstUndefinedOptionIndex > 0) {
+                        const optionsToBundle = shortOptionsArray.slice(0, firstUndefinedOptionIndex);
+                        const attachedValue = optionName.slice(firstUndefinedOptionIndex);
+                       
+                        optionsToBundle.forEach((optName, index) => {
+                            const isLast = index === optionsToBundle.length - 1;
 
-                if (!isEveryOptionDefined && isAttachedNameDefined) {
-                    acc.push({
-                        name: attachedName,
-                        fullName: `-${attachedName}`,
-                        type: ArgumentType.Option,
-                        value: attachedValue,
-                        variant: OptionVariant.Short,
-                        valueStyle: OptionValueStyle.Attached,
-                    });
+                            acc.push({
+                                fullName: '-' + optName,
+                                name: optName,
+                                type: ArgumentType.Option,
+                                value: isLast ? attachedValue : '',
+                                variant: OptionVariant.Short,
+                                valueStyle: isLast ? OptionValueStyle.Attached : undefined,
+                                bunled: { 
+                                    fullName: arg,
+                                    opts: optionsToBundle
+                                }
+                            })
+                        })
+    
+                        return acc;
+                    }
 
-                    return acc;
                 }
 
-                bunledOptions.forEach((opt) => {
+                shortOptionsArray.forEach((opt) => {
                     acc.push({
                         type: ArgumentType.Option,
                         value: '',
@@ -149,7 +165,7 @@ export class ArgumentParser {
                         fullName: `-${opt}`,
                         bunled: {
                             fullName: arg,
-                            opts: bunledOptions,
+                            opts: shortOptionsArray,
                         },
                     });
                 });
