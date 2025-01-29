@@ -1,5 +1,14 @@
 # argzod
 
+## 0.5.0
+
+### Minor Changes
+
+- 593fc2f: Added support for attached values for short options.
+  Examples:
+  `-ovalue` -> `{ o: value }` assuming option `o` is defined and `v` is not
+  `-abvalue` -> `{ a: "", b: value }` assuming `a` and `b` options are defined and `v` is not.
+
 ## 0.4.2
 
 ### Patch Changes
