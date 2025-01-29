@@ -1,8 +1,9 @@
+import type { ZodError} from 'zod';
 import { ErrorCode } from './codes';
 
 export const errorMessageMap = {
-    [ErrorCode.ZodParse]: 'Zod parsing error',
-    [ErrorCode.CommandNotFound]: 'Command not found',
+    [ErrorCode.ZodParse]: (error: ZodError) => error.issues.map((i) => i.message).join('\n'),
+    [ErrorCode.CommandNotFound]: (commandName?: string) => `Command ${commandName ? commandName : ""} not found`,
     [ErrorCode.ShortInlineOptionsNotSupported]:
         'Short inline options are not supported',
     [ErrorCode.CanNotCombineOptValueStyles]: 'Can not use multiple value styles on one option',

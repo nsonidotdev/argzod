@@ -223,9 +223,7 @@ export class ArgumentParser {
                         index
                     );
                     if (optionValue.length && arg.valueStyle) {
-                        throw new ArgzodError({
-                            code: ErrorCode.CanNotCombineOptValueStyles,
-                        });
+                        throw new ArgzodError(ErrorCode.CanNotCombineOptValueStyles);
                     }
 
                     return {
@@ -250,10 +248,7 @@ export class ArgumentParser {
         optionIndex: number
     ): string | string[] {
         if (args[optionIndex]?.type !== ArgumentType.Option) {
-            throw new ArgzodError({
-                code: ErrorCode.Other,
-                message: 'Internal error',
-            });
+            throw new ArgzodError(ErrorCode.Other);
         }
 
         let shouldIterate = true;

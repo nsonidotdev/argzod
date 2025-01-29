@@ -27,6 +27,7 @@ export const getCommandData = ({ commandLine, commands }: Options) => {
     if (!targetCommand) {
         throw new ArgzodError({
             code: ErrorCode.CommandNotFound,
+            ctx: [undefined]
         });
     }
 
@@ -51,7 +52,7 @@ export const getCommandData = ({ commandLine, commands }: Options) => {
 
     throw new ArgzodError({
         code: ErrorCode.CommandNotFound,
-        message: `Command ${parsedArgs[0]?.value ?? '?'} not found`,
+        ctx: [parsedArgs[0]?.value]
     });
 };
 
@@ -78,9 +79,7 @@ const parseCommand = (
             throw new ArgzodError({
                 code: ErrorCode.ZodParse,
                 path: `Argument ${index + 1}`,
-                message: argParseResult.error.issues
-                    .map((i) => i.message)
-                    .join('\n'),
+                ctx: [argParseResult.error]
             });
         }
 
@@ -93,7 +92,6 @@ const parseCommand = (
             opt.name,
             command.options
         );
-
 
         if (!result) {
             throw new ArgzodError({
@@ -121,9 +119,7 @@ const parseCommand = (
                     throw new ArgzodError({
                         code: ErrorCode.ZodParse,
                         path,
-                        message: zodResult.error.issues
-                            .map((i) => i.message)
-                            .join('\n'),
+                        ctx: [zodResult.error]
                     });
                 }
 
