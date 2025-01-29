@@ -1,12 +1,11 @@
 import { ErrorCode } from './codes';
 
-export const errorMessageMap: Record<ErrorCode, string> = {
+export const errorMessageMap = {
     [ErrorCode.ZodParse]: 'Zod parsing error',
     [ErrorCode.CommandNotFound]: 'Command not found',
     [ErrorCode.ShortInlineOptionsNotSupported]:
         'Short inline options are not supported',
-    [ErrorCode.CanNotCombineOptValueStyles]:
-        'Can not use multiple value styles on one option',
+    [ErrorCode.CanNotCombineOptValueStyles]: 'Can not use multiple value styles on one option',
     [ErrorCode.InvalidInlineOptionFormat]:
         'Invalid inline option format. Example: --option=value',
     [ErrorCode.InvalidOptionName]:
@@ -20,4 +19,5 @@ export const errorMessageMap: Record<ErrorCode, string> = {
     [ErrorCode.OptionNotDefined]: 'Option is not defined',
     [ErrorCode.CommandDuplication]: 'Duplicate command in programw',
     [ErrorCode.Other]: 'Unknown error',
-};
+} satisfies Record<ErrorCode, string | ((...args: any) => string)>;
+
