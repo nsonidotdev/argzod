@@ -1,7 +1,7 @@
-import { ArgumentType } from '../enums';
-import type { ParsedArgument } from '../types/arguments';
+import { EntryType } from '../enums';
+import type { ParsedEntry } from '../types/arguments';
 import type { Command } from '../types/command';
-import { ArgumentParser } from './parser';
+import { EntryParser } from '../parser';
 import {
     matchOptionDefinitionByOptionName,
     matchParsedOptionsByDefinition,
@@ -31,10 +31,10 @@ export const getCommandData = ({ commandLine, commands }: Options) => {
         });
     }
 
-    const parser = new ArgumentParser(targetCommand);
+    const parser = new EntryParser(targetCommand);
     const parsedCommandLine = parser.parse(commandLine);
     const parsedArgs = parsedCommandLine.filter(
-        (arg) => arg.type === ArgumentType.Argument
+        (arg) => arg.type === EntryType.Argument
     );
 
     const targetCommandResult = trySync(() =>
@@ -58,13 +58,13 @@ export const getCommandData = ({ commandLine, commands }: Options) => {
 
 const parseCommand = (
     command: Command,
-    parsedCommandLine: ParsedArgument[]
+    parsedCommandLine: ParsedEntry[]
 ) => {
     const parsedArgs = parsedCommandLine.filter(
-        (arg) => arg.type === ArgumentType.Argument
+        (arg) => arg.type === EntryType.Argument
     );
     const parsedOptions = parsedCommandLine.filter(
-        (arg) => arg.type === ArgumentType.Option
+        (arg) => arg.type === EntryType.Option
     );
 
     if (parsedArgs.length > command.arguments.length)
