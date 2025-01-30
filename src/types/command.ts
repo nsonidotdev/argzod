@@ -1,7 +1,7 @@
 import type {
     ArgumentDefinition,
     OptionDefinition,
-    ParsedArgument,
+    ParsedEntry,
 } from './arguments';
 import type { InferCommandArguments, InferCommandOptions } from './utils';
 
@@ -18,7 +18,7 @@ export type ActionData<
 > = {
     options: TOpts;
     args: TArgs;
-    parsedCommandLine: ParsedArgument[];
+    parsedCommandLine: ParsedEntry[];
 };
 
 export type CommandOptions = Record<string, OptionDefinition>;

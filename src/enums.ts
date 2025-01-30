@@ -6,11 +6,11 @@ export const OptionVariant = {
 } as const;
 export type OptionVariant = ObjectValues<typeof OptionVariant>;
 
-export const ArgumentType = {
+export const EntryType = {
     Argument: 'argument',
     Option: 'option',
 } as const;
-export type ArgumentType = ObjectValues<typeof ArgumentType>;
+export type EntryType = ObjectValues<typeof EntryType>;
 
 export const OptionValueStyle = {
     Inline: 'inline', // --option=value
