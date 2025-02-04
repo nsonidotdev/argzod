@@ -16,8 +16,14 @@ export class ArgzodError<
     constructor(
         data: TMessage extends (...args: any) => string
             ? { code: TCode; ctx: Parameters<TMessage>; path?: string }
-            : { code: TCode; path?: string } | TCode
+            : { code: TCode; path?: string } | TCode,
+        customMessages?: MessageMap
     ) {
+        const messages = {
+            ...errorMessageMap,
+            ...customMessages
+        }
+        
         let message = '';
         let ctx: any = undefined;
         let code: TCode;
@@ -25,11 +31,11 @@ export class ArgzodError<
 
         if (typeof data === 'string') {
             code = data as TCode;
-            message = errorMessageMap[code] as string;
+            message = messages[code] as string;
         } else {
             // @ts-expect-error
             if ('ctx' in data) {
-                const messageFn = errorMessageMap[data.code] as (
+                const messageFn = messages[data.code] as (
                     ...arg: any
                 ) => string;
                 message = messageFn(...data.ctx);
@@ -37,7 +43,7 @@ export class ArgzodError<
                 code = data.code;
                 path = data.path;
             } else {
-                message = errorMessageMap[data.code] as string;
+                message = messages[data.code] as string;
                 code = data.code;
                 path = data.path;
             }
@@ -50,20 +56,5 @@ export class ArgzodError<
         this.ctx = ctx;
         this.code = code;
         this.path = path;
-    }
-
-    toString(customMessages?: MessageMap): string {
-        if (!customMessages || !customMessages[this.code]) return this.message;
-
-        const customMessage = customMessages[this.code]!;
-
-        if (typeof customMessage === 'string') {
-            return customMessage;
-        } else if (this.ctx != null) {
-            // @ts-expect-error
-            return customMessage(...this.ctx);
-        }
-
-        return this.message;
     }
 }

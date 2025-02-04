@@ -4,7 +4,6 @@ import type {
     CommandOptions,
     CommandDefinition,
 } from './types/command';
-import { z } from 'zod';
 import { trySync } from './utils/try';
 import { ArgzodError, ErrorCode } from './errors';
 import type { ProgramConfig } from './types/program';
@@ -35,17 +34,11 @@ class Program<T extends string> {
 
         if (!commandResult.success) {
             if (commandResult.error instanceof ArgzodError) {
-                console.error(commandResult.error.toString(this._config.messages));
-            }
-
-            if (commandResult.error instanceof z.ZodError) {
-                console.error(
-                    commandResult.error.issues
-                        .map((i) => {
-                            i.message;
-                        })
-                        .join('\n')
-                );
+                if (this._config.onError) {
+                    this._config.onError(commandResult.error);
+                } else {
+                    console.error(commandResult.error.message);
+                }
             }
 
             process.exit(1);
@@ -65,7 +58,7 @@ class Program<T extends string> {
         if (this._commands.find((c) => c.name === options.name)) {
             throw new ArgzodError({
                 code: ErrorCode.CommandDuplication,
-            });
+            }, this._config.messages);
         }
 
         const command = createCommand<TArgs, TOpts>(options);
@@ -78,7 +71,7 @@ class Program<T extends string> {
         if (this._commands.find((c) => c.name === command.name)) {
             throw new ArgzodError({
                 code: ErrorCode.CommandDuplication,
-            });
+            }, this._config.messages);
         }
 
         this._commands.push(command as Command);
@@ -102,10 +95,10 @@ class Program<T extends string> {
             throw new ArgzodError({
                 code: ErrorCode.CommandNotFound,
                 ctx: [undefined],
-            });
+            }, this._config.messages);
         }
 
-        const parser = new EntryParser(targetCommand);
+        const parser = new EntryParser(targetCommand, this._config);
         const parsedEntries = parser.parse(commandLine);
         const parsedArgs = parsedEntries.filter(
             (arg) => arg.type === EntryType.Argument
@@ -130,6 +123,6 @@ class Program<T extends string> {
         throw new ArgzodError({
             code: ErrorCode.CommandNotFound,
             ctx: [parsedArgs[0]?.value],
-        });
+        }, this._config.messages);
     }
 }

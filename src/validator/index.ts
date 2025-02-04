@@ -31,7 +31,7 @@ export class Validator {
         );
 
         if (parsedArgs.length > this.command.arguments.length)
-            throw new ArgzodError(ErrorCode.InvalidPositionalArguments);
+            throw new ArgzodError(ErrorCode.InvalidPositionalArguments, this.programConfig.messages);
 
         const validatedArgs = this.command.arguments.map((argDef, index) => {
             const argParseResult = argDef.schema.safeParse(
@@ -43,7 +43,7 @@ export class Validator {
                     code: ErrorCode.ZodParse,
                     path: `Argument ${index + 1}`,
                     ctx: [argParseResult.error],
-                });
+                }, this.programConfig.messages);
             }
 
             return argParseResult.data;
@@ -60,7 +60,7 @@ export class Validator {
                 throw new ArgzodError({
                     code: ErrorCode.OptionNotDefined,
                     path: opt.fullName,
-                });
+                }, this.programConfig.messages);
             }
         });
 
@@ -83,7 +83,7 @@ export class Validator {
                             code: ErrorCode.ZodParse,
                             path,
                             ctx: [zodResult.error],
-                        });
+                        }, this.programConfig.messages);
                     }
 
                     return zodResult.data;

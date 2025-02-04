@@ -3,18 +3,21 @@ import {
     isNumericString,
     isValidOptionName,
 } from '../utils';
-import { EntryType as EntryType, OptionValueStyle, OptionVariant } from '../enums';
+import { EntryType, OptionValueStyle, OptionVariant } from '../enums';
 import { ArgzodError, ErrorCode } from '../errors';
 import type { Command } from '../types/command';
 import type { ParsedEntry } from '../types/arguments';
 import { parseInlineOption } from './parse-inline-option';
 import { parseBundledOptions } from './parse-bundled-options';
+import type { ProgramConfig } from '../types/program';
 
 export class EntryParser {
     private _command: Command;
+    private _programConfig: ProgramConfig;
 
-    constructor(command: Command) {
+    constructor(command: Command, programConfig: ProgramConfig) {
         this._command = command;
+        this._programConfig = programConfig;
     }
 
     public parse(args: string[]): ParsedEntry[] {
@@ -59,7 +62,7 @@ export class EntryParser {
             if (!isValidOptionName(optionName)) {
                 throw new ArgzodError({
                     code: ErrorCode.InvalidOptionName,
-                });
+                }, this._programConfig.messages);
             }
 
             if (leadingDashesCount === 1) {
@@ -96,14 +99,14 @@ export class EntryParser {
                     throw new ArgzodError({
                         code: ErrorCode.InvalidLongOptionFormat,
                         path: entry,
-                    });
+                    }, this._programConfig.messages);
                 }
             }
 
             throw new ArgzodError({
                 code: ErrorCode.InvalidOptionFormat,
                 path: entry,
-            });
+            }, this._programConfig.messages);
         }, []);
     }
 
@@ -132,7 +135,8 @@ export class EntryParser {
                     );
                     if (optionValue.length && entry.valueStyle) {
                         throw new ArgzodError(
-                            ErrorCode.CanNotCombineOptValueStyles
+                            ErrorCode.CanNotCombineOptValueStyles,
+                            this._programConfig.messages
                         );
                     }
 
@@ -158,7 +162,7 @@ export class EntryParser {
         optionIndex: number
     ): string | string[] {
         if (entries[optionIndex]?.type !== EntryType.Option) {
-            throw new ArgzodError(ErrorCode.Other);
+            throw new ArgzodError(ErrorCode.Other, this._programConfig.messages);
         }
 
         let shouldIterate = true;
