@@ -1,6 +1,7 @@
 import type { ParsedOption, OptionDefinition } from '../types/arguments';
 import type { CommandOptions } from '../types/command';
 
+
 export const matchOptionDefinitionByOptionName = <T extends string>(
     option: string,
     definitions: CommandOptions

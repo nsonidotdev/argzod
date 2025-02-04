@@ -1,3 +1,4 @@
+
 export type ProgramConfig = {
-    allowShortOptionsBundling?: boolean;
+    _blank?: never;
 };

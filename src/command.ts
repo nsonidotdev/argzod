@@ -4,7 +4,7 @@ import type {
     CommandArguments,
     CommandDefinition,
     CommandOptions,
-} from '../types/command';
+} from './types/command';
 
 export const createCommand = <
     const TArgs extends CommandArguments = CommandArguments,
