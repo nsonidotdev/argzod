@@ -13,5 +13,6 @@ export const ErrorCode = {
     OptionNotDefined: 'option-not-defined',
     CommandNotFound: 'command-not-found',
     CommandDuplication: 'command-duplication',
+    InvalidPositionalArguments: "invalid-positional-args"
 } as const;
 export type ErrorCode = ObjectValues<typeof ErrorCode>;

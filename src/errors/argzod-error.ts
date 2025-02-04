@@ -1,15 +1,22 @@
+import type { MessageMap } from '../types';
 import type { ErrorCode } from './codes';
 import { errorMessageMap } from './messages';
 
-export class ArgzodError<TCode extends ErrorCode = any, TMessage extends (typeof errorMessageMap)[TCode] = (typeof errorMessageMap)[TCode]> extends Error {
+export class ArgzodError<
+    TCode extends ErrorCode = any,
+    TMessage extends
+        (typeof errorMessageMap)[TCode] = (typeof errorMessageMap)[TCode],
+> extends Error {
     code: TCode;
-    ctx: TMessage extends ((...args: any) => string) ? Parameters<TMessage> : undefined;
+    private ctx: TMessage extends (...args: any) => string
+        ? Parameters<TMessage>
+        : undefined;
     path?: string;
 
     constructor(
         data: TMessage extends (...args: any) => string
-        ? { code: TCode; ctx: Parameters<TMessage>, path?: string }
-        : { code: TCode, path?: string } | TCode
+            ? { code: TCode; ctx: Parameters<TMessage>; path?: string }
+            : { code: TCode; path?: string } | TCode
     ) {
         let message = '';
         let ctx: any = undefined;
@@ -21,20 +28,21 @@ export class ArgzodError<TCode extends ErrorCode = any, TMessage extends (typeof
             message = errorMessageMap[code] as string;
         } else {
             // @ts-expect-error
-            if ("ctx" in data) {
-                const messageFn = errorMessageMap[data.code] as (...arg: any) => string;
+            if ('ctx' in data) {
+                const messageFn = errorMessageMap[data.code] as (
+                    ...arg: any
+                ) => string;
                 message = messageFn(...data.ctx);
                 ctx = data.ctx;
                 code = data.code;
                 path = data.path;
             } else {
                 message = errorMessageMap[data.code] as string;
-                code = data.code
+                code = data.code;
                 path = data.path;
             }
+        }
 
-        };
-        
         super(message);
         Object.setPrototypeOf(this, ArgzodError.prototype);
 
@@ -42,5 +50,20 @@ export class ArgzodError<TCode extends ErrorCode = any, TMessage extends (typeof
         this.ctx = ctx;
         this.code = code;
         this.path = path;
+    }
+
+    toString(customMessages?: MessageMap): string {
+        if (!customMessages || !customMessages[this.code]) return this.message;
+
+        const customMessage = customMessages[this.code]!;
+
+        if (typeof customMessage === 'string') {
+            return customMessage;
+        } else if (this.ctx != null) {
+            // @ts-expect-error
+            return customMessage(...this.ctx);
+        }
+
+        return this.message;
     }
 }

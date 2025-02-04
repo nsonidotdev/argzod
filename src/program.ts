@@ -35,7 +35,7 @@ class Program<T extends string> {
 
         if (!commandResult.success) {
             if (commandResult.error instanceof ArgzodError) {
-                console.error(commandResult.error.message);
+                console.error(commandResult.error.toString(this._config.messages));
             }
 
             if (commandResult.error instanceof z.ZodError) {

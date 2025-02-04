@@ -20,5 +20,6 @@ export const errorMessageMap = {
     [ErrorCode.OptionNotDefined]: 'Option is not defined',
     [ErrorCode.CommandDuplication]: 'Duplicate command in programw',
     [ErrorCode.Other]: 'Unknown error',
+    [ErrorCode.InvalidPositionalArguments]: "Too many positional arguemts"
 } satisfies Record<ErrorCode, string | ((...args: any) => string)>;
 

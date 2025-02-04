@@ -31,7 +31,7 @@ export class Validator {
         );
 
         if (parsedArgs.length > this.command.arguments.length)
-            throw new Error('Too many arguments');
+            throw new ArgzodError(ErrorCode.InvalidPositionalArguments);
 
         const validatedArgs = this.command.arguments.map((argDef, index) => {
             const argParseResult = argDef.schema.safeParse(

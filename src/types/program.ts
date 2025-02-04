@@ -1,4 +1,6 @@
+import type { MessageMap } from ".";
 
 export type ProgramConfig = {
-    _blank?: never;
+    messages?: MessageMap;
 };
+
