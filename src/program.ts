@@ -109,7 +109,7 @@ class Program<T extends string> {
 
         const validator = new Validator(
             this._config,
-            parsedArgs,
+            parsedEntries,
             targetCommand
         );
         const targetCommandResult = trySync(() => validator.validate());

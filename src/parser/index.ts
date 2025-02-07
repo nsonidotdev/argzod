@@ -23,7 +23,7 @@ export class EntryParser {
     public parse(args: string[]): ParsedEntry[] {
         const formattedEntries = this._format(args);
         const mergedEntries = this._merge(formattedEntries);
-        console.log(mergedEntries);
+        
         return mergedEntries;
     }
 
