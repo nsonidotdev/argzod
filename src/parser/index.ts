@@ -61,8 +61,8 @@ export class EntryParser {
             const optionName = entry.slice(leadingDashesCount);
             if (!isValidOptionName(optionName)) {
                 throw new ArgzodError({
-                    code: ErrorCode.InvalidOptionName,
-                }, this._programConfig.messages);
+                    code: ErrorCode.InvalidOption,
+                });
             }
 
             if (leadingDashesCount === 1) {
@@ -97,16 +97,16 @@ export class EntryParser {
                     return acc;
                 } else {
                     throw new ArgzodError({
-                        code: ErrorCode.InvalidLongOptionFormat,
+                        code: ErrorCode.InvalidOption,
                         path: entry,
-                    }, this._programConfig.messages);
+                    });
                 }
             }
 
             throw new ArgzodError({
-                code: ErrorCode.InvalidOptionFormat,
+                code: ErrorCode.InvalidOption,
                 path: entry,
-            }, this._programConfig.messages);
+            });
         }, []);
     }
 
@@ -134,10 +134,7 @@ export class EntryParser {
                         index
                     );
                     if (optionValue.length && entry.valueStyle) {
-                        throw new ArgzodError(
-                            ErrorCode.CanNotCombineOptValueStyles,
-                            this._programConfig.messages
-                        );
+                        throw new ArgzodError(ErrorCode.InvalidOption);
                     }
 
                     return {
@@ -162,7 +159,7 @@ export class EntryParser {
         optionIndex: number
     ): string | string[] {
         if (entries[optionIndex]?.type !== EntryType.Option) {
-            throw new ArgzodError(ErrorCode.Other, this._programConfig.messages);
+            throw new ArgzodError(ErrorCode.Internal);
         }
 
         let shouldIterate = true;

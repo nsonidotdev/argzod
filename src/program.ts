@@ -34,6 +34,9 @@ class Program<T extends string> {
 
         if (!commandResult.success) {
             if (commandResult.error instanceof ArgzodError) {
+                // Set custom messages for given error
+                commandResult.error.__applyMessageMap(this._config.messages)
+
                 if (this._config.onError) {
                     this._config.onError(commandResult.error);
                 } else {
@@ -57,8 +60,8 @@ class Program<T extends string> {
     >(options: CommandDefinition<T, TArgs, TOpts>): Command {
         if (this._commands.find((c) => c.name === options.name)) {
             throw new ArgzodError({
-                code: ErrorCode.CommandDuplication,
-            }, this._config.messages);
+                code: ErrorCode.InvalidDefinitions,
+            });
         }
 
         const command = createCommand<TArgs, TOpts>(options);
@@ -70,8 +73,8 @@ class Program<T extends string> {
     attachCommand(command: Command) {
         if (this._commands.find((c) => c.name === command.name)) {
             throw new ArgzodError({
-                code: ErrorCode.CommandDuplication,
-            }, this._config.messages);
+                code: ErrorCode.InvalidDefinitions,
+            });
         }
 
         this._commands.push(command as Command);
@@ -95,7 +98,7 @@ class Program<T extends string> {
             throw new ArgzodError({
                 code: ErrorCode.CommandNotFound,
                 ctx: [undefined],
-            }, this._config.messages);
+            });
         }
 
         const parser = new EntryParser(targetCommand, this._config);
@@ -123,6 +126,6 @@ class Program<T extends string> {
         throw new ArgzodError({
             code: ErrorCode.CommandNotFound,
             ctx: [parsedArgs[0]?.value],
-        }, this._config.messages);
+        });
     }
 }

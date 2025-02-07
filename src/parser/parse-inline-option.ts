@@ -13,20 +13,20 @@ export const parseInlineOption = ({
     const inlineOptionArray = entry.slice(leadingDashes).split('=');
     if (leadingDashes === 1 || (inlineOptionArray[0]?.length ?? 0) < 2) {
         throw new ArgzodError({
-            code: ErrorCode.ShortInlineOptionsNotSupported,
+            code: ErrorCode.InvalidOption,
         });
     }
 
     if (inlineOptionArray.length !== 2) {
         throw new ArgzodError({
-            code: ErrorCode.InvalidInlineOptionFormat,
+            code: ErrorCode.InvalidOption,
         });
     }
 
     const [optName, optValue] = inlineOptionArray as [string, string];
     if (!isValidOptionName(optName)) {
         throw new ArgzodError({
-            code: ErrorCode.InvalidOptionName,
+            code: ErrorCode.InvalidOption,
         });
     }
 

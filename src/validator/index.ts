@@ -8,7 +8,7 @@ import { ArgzodError, ErrorCode } from '../errors';
 import { EntryType } from '../enums';
 
 export class Validator {
-    private programConfig: ProgramConfig;
+    private _programConfig: ProgramConfig;
     private command: Command;
     private entries: ParsedEntry[];
 
@@ -17,7 +17,7 @@ export class Validator {
         entries: ParsedEntry[],
         command: Command
     ) {
-        this.programConfig = programConfig;
+        this._programConfig = programConfig;
         this.entries = entries;
         this.command = command;
     }
@@ -31,7 +31,7 @@ export class Validator {
         );
 
         if (parsedArgs.length > this.command.arguments.length)
-            throw new ArgzodError(ErrorCode.InvalidPositionalArguments, this.programConfig.messages);
+            throw new ArgzodError(ErrorCode.InvalidArguments);
 
         const validatedArgs = this.command.arguments.map((argDef, index) => {
             const argParseResult = argDef.schema.safeParse(
@@ -40,10 +40,10 @@ export class Validator {
 
             if (!argParseResult.success) {
                 throw new ArgzodError({
-                    code: ErrorCode.ZodParse,
+                    code: ErrorCode.Validation,
                     path: `Argument ${index + 1}`,
                     ctx: [argParseResult.error],
-                }, this.programConfig.messages);
+                });
             }
 
             return argParseResult.data;
@@ -60,7 +60,7 @@ export class Validator {
                 throw new ArgzodError({
                     code: ErrorCode.OptionNotDefined,
                     path: opt.fullName,
-                }, this.programConfig.messages);
+                });
             }
         });
 
@@ -80,10 +80,10 @@ export class Validator {
 
                     if (!zodResult.success) {
                         throw new ArgzodError({
-                            code: ErrorCode.ZodParse,
+                            code: ErrorCode.Validation,
                             path,
                             ctx: [zodResult.error],
-                        }, this.programConfig.messages);
+                        });
                     }
 
                     return zodResult.data;

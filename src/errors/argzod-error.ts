@@ -1,17 +1,18 @@
 import type { MessageMap } from '../types';
 import type { ErrorCode } from './codes';
 import { errorMessageMap } from './messages';
+import type { ErrorMessageFn } from './types';
 
 export class ArgzodError<
     TCode extends ErrorCode = any,
     TMessage extends
         (typeof errorMessageMap)[TCode] = (typeof errorMessageMap)[TCode],
 > extends Error {
-    code: TCode;
+    #code: TCode;
+    path?: string;
     private ctx: TMessage extends (...args: any) => string
         ? Parameters<TMessage>
         : undefined;
-    path?: string;
 
     constructor(
         data: TMessage extends (...args: any) => string
@@ -21,9 +22,9 @@ export class ArgzodError<
     ) {
         const messages = {
             ...errorMessageMap,
-            ...customMessages
-        }
-        
+            ...customMessages,
+        };
+
         let message = '';
         let ctx: any = undefined;
         let code: TCode;
@@ -54,7 +55,32 @@ export class ArgzodError<
 
         this.name = 'ArgzodError';
         this.ctx = ctx;
-        this.code = code;
+        this.#code = code;
         this.path = path;
+    }
+
+    get code() {
+        return this.#code;
+    }
+
+    /**
+     * Using given message map updates error message if finds appropriate code in a map
+     * @param messageMap Map of user defined custom messages
+     * @returns void
+     */
+    __applyMessageMap(messageMap?: MessageMap) {
+        if (!messageMap) return;
+
+        const message = messageMap[this.#code];
+        if (!message) return;
+
+        if (typeof message === 'string') {
+            this.message = message;
+        } else if (typeof message === 'function') {
+            const messageFn = message as ErrorMessageFn;
+            const ctx = this.ctx as any[];
+
+            this.message = messageFn(...ctx);
+        }
     }
 }
