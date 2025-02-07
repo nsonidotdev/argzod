@@ -69,6 +69,7 @@ export class EntryParser {
                 if (optionName.length === 1) {
                     return acc.concat({
                         type: EntryType.Option,
+                        original: entry,
                         value: '',
                         name: optionName,
                         variant: OptionVariant.Short,
@@ -88,6 +89,7 @@ export class EntryParser {
                 if (optionName.length > 1) {
                     acc.push({
                         type: EntryType.Option,
+                        original: entry,
                         value: '',
                         name: optionName,
                         variant: OptionVariant.Long,

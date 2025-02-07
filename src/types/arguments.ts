@@ -8,6 +8,7 @@ export type ParsedOption = {
     value: string | string[];
     fullName: string;
     valueStyle?: OptionValueStyle;
+    original: string;
     bunled?: {
         fullName: string;
         opts: string[];

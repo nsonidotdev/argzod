@@ -37,5 +37,6 @@ export const parseInlineOption = ({
         variant: OptionVariant.Short,
         fullName: `--${optName}`,
         valueStyle: OptionValueStyle.Inline,
+        original: entry,
     };
 };

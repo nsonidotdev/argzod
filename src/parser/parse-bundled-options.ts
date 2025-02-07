@@ -31,6 +31,7 @@ export const parseBundledOptions = ({
             
             return {
                 fullName: '-' + optName,
+                original: entry,
                 name: optName,
                 type: EntryType.Option,
                 value: isLast ? attachedValue : '',
@@ -51,6 +52,7 @@ export const parseBundledOptions = ({
             name: opt,
             variant: OptionVariant.Short,
             fullName: `-${opt}`,
+            original: entry,
             bunled: {
                 fullName: entry,
                 opts: bundledOptions,
