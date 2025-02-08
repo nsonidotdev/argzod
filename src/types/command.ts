@@ -24,21 +24,6 @@ export type ActionData<
 export type CommandOptions = Record<string, OptionDefinition>;
 export type CommandArguments = Array<ArgumentDefinition>;
 
-export type Command<
-    TArgs extends CommandArguments = CommandArguments,
-    TOpts extends CommandOptions = CommandOptions,
-> = {
-    name: CommandName<string>;
-    action: (
-        arg: ActionData<
-            InferCommandArguments<TArgs>,
-            InferCommandOptions<TOpts>
-        >
-    ) => void;
-    options: TOpts;
-    arguments: TArgs;
-};
-
 export type CommandDefinition<
     TName extends CommandName = CommandName<string>,
     TArgs extends CommandArguments = never[],

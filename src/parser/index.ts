@@ -5,19 +5,19 @@ import {
 } from '../utils';
 import { EntryType, OptionValueStyle, OptionVariant } from '../enums';
 import { ArgzodError, ErrorCode } from '../errors';
-import type { Command } from '../types/command';
 import type { ParsedEntry } from '../types/arguments';
 import { parseInlineOption } from './parse-inline-option';
 import { parseBundledOptions } from './parse-bundled-options';
 import type { Program } from '../program';
 import { trySync } from '../utils/try';
+import { Command } from '../command';
 
 export class EntryParser {
-    private _command: Command;
+    private command: Command;
     private program: Program;
 
     constructor(command: Command, program: Program) {
-        this._command = command;
+        this.command = command;
         this.program = program;
     }
 
@@ -52,16 +52,16 @@ export class EntryParser {
                 entry.includes('=') &&
                 (leadingDashesCount === 1 || leadingDashesCount === 2)
             ) {
-                const option = trySync(() =>
+                const option = this.program._registerError(() =>
                     parseInlineOption({
                         entry,
                         leadingDashes: leadingDashesCount,
                     })
                 );
-                if (option.success) {
-                    return acc.concat(option.data);
+
+                if (option) {
+                    return acc.concat(option);
                 } else {
-                    this.program._registerError(option.error);
                     return acc;
                 }
             }
@@ -91,7 +91,7 @@ export class EntryParser {
 
                 const bunledOptions = parseBundledOptions({
                     entry: entry,
-                    optionDefinitions: this._command.options,
+                    optionDefinitions: this.command.options,
                 });
 
                 return acc.concat(...bunledOptions);

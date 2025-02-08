@@ -1,5 +1,4 @@
 import type { Program } from '../program';
-import type { Command } from '../types/command';
 import type { ParsedEntry } from '../types/arguments';
 import { schemas } from '../schemas';
 import {
@@ -9,33 +8,32 @@ import {
 } from '../utils/options';
 import { ArgzodError, ErrorCode } from '../errors';
 import { EntryType } from '../enums';
+import { Command } from '../command';
 
 export class Validator {
     private program: Program;
     private command: Command;
-    private entries: ParsedEntry[];
 
-    constructor(program: Program, entries: ParsedEntry[], command: Command) {
+    constructor( command: Command, program: Program) {
         this.program = program;
-        this.entries = entries;
         this.command = command;
     }
 
-    validate() {
-        const parsedArgs = this.entries.filter(
+    validate(parsedEntries: ParsedEntry[]) {
+        const parsedArgs = parsedEntries.filter(
             (arg) => arg.type === EntryType.Argument
         );
-        const parsedOptions = this.entries.filter(
+        const parsedOptions = parsedEntries.filter(
             (arg) => arg.type === EntryType.Option
         );
 
-        if (parsedArgs.length > this.command.arguments.length) {
+        if (parsedArgs.length > this.command.args.length) {
             this.program._registerError(
                 new ArgzodError(ErrorCode.InvalidArguments)
             );
         }
 
-        const validatedArgs = this.command.arguments.map((argDef, index) => {
+        const validatedArgs = this.command.args.map((argDef, index) => {
             const argParseResult = argDef.schema.safeParse(
                 parsedArgs[index]?.value
             );
@@ -144,8 +142,6 @@ export class Validator {
         return {
             validatedArgs,
             validatedOptions,
-            command: this.command,
-            parsedCommandLine: this.entries,
         };
     }
 }

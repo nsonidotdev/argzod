@@ -1,5 +1,4 @@
 import type {
-    Command,
     CommandArguments,
     CommandOptions,
     CommandDefinition,
@@ -7,11 +6,7 @@ import type {
 import { trySync } from './utils/try';
 import { ArgzodError, ErrorCode } from './errors';
 import type { ProgramConfig } from './types/program';
-import { EntryParser } from './parser';
-
-import { EntryType } from './enums';
-import { Validator } from './validator';
-import { createCommand } from './command';
+import { Command, createCommand } from './command';
 import { generateGuid } from './utils';
 
 const DEFAULT_CONFIG: ProgramConfig = {};
@@ -23,7 +18,7 @@ class Program<T extends string = string> {
     _id: string;
     private commands: Command[];
     private config: ProgramConfig;
-    private errors: ArgzodError[];
+    private errors: Set<ArgzodError>;
 
     constructor(config?: ProgramConfig) {
         this._id = generateGuid();
@@ -32,37 +27,25 @@ class Program<T extends string = string> {
             ...DEFAULT_CONFIG,
             ...config,
         };
-        this.errors = [];
+        this.errors = new Set();
     }
 
     run(args: string[] = process.argv.slice(2)) {
         // clean up previous run data
         this.cleanUp();
 
-        const commandResult = trySync(() => this._processCommand(args));
+        const { process: processCommand, targetCommand } =
+            this._matchCommand(args);
+        const { validatedData, parsedEntries } = processCommand();
 
-        if (!commandResult.success || this.errors.length) {
-            // Set custom messages for given error
-            this.errors.forEach((e) =>
-                e.__applyMessageMap(this.config.messages)
-            );
-
-            if (this.config.onError) {
-                this.config.onError(this.errors);
-            } else {
-                console.error(this.errors.map((e) => e.message).join('\n'));
-            }
-
-            process.exit(1);
+        if (this.errors.size) {
+            this.exitError();
         }
 
-        const { command, parsedCommandLine, validatedArgs, validatedOptions } =
-            commandResult.data;
-
-        command.action({
-            args: validatedArgs,
-            options: validatedOptions,
-            parsedCommandLine: parsedCommandLine,
+        targetCommand.action({
+            args: validatedData.validatedArgs,
+            options: validatedData.validatedOptions,
+            parsedCommandLine: parsedEntries,
         });
     }
 
@@ -76,7 +59,10 @@ class Program<T extends string = string> {
             });
         }
 
-        const command = createCommand<TArgs, TOpts>(options);
+        const command = createCommand<TArgs, TOpts>({
+            ...options,
+            program: this,
+        });
         this.commands.push(command);
 
         return command;
@@ -94,7 +80,7 @@ class Program<T extends string = string> {
         return this;
     }
 
-    private _processCommand(commandLine: string[]) {
+    private _matchCommand(commandLine: string[]) {
         const namedCommand = this.commands.find(
             (c) => c.name === commandLine[0]
         );
@@ -110,45 +96,73 @@ class Program<T extends string = string> {
                     code: ErrorCode.CommandNotFound,
                     ctx: [undefined],
                 }),
-                'critical'
+                'exit'
             );
         }
 
-        const parser = new EntryParser(targetCommand, this);
-        const parsedEntries = parser.parse(commandLine);
-        const parsedArgs = parsedEntries.filter(
-            (arg) => arg.type === EntryType.Argument
-        );
-
-        const validator = new Validator(this, parsedEntries, targetCommand);
-        const targetCommandResult = trySync(() => validator.validate());
-        if (targetCommandResult.success) return targetCommandResult.data;
-
-        if (
-            targetCommand === namedCommand ||
-            (targetCommand === indexCommand &&
-                targetCommand.arguments.length === parsedArgs.length)
-        ) {
-            this._registerError(targetCommandResult.error, 'critical');
-        }
-
-        this._registerError(new ArgzodError({
-            code: ErrorCode.CommandNotFound,
-            ctx: [parsedArgs[0]?.value],
-        }), 'critical');
+        return {
+            targetCommand,
+            namedCommand,
+            indexCommand,
+            commandEntries: commandLine,
+            process: () => targetCommand.process(commandLine),
+        };
     }
 
-    _registerError(error: ArgzodError, critical: 'critical'): never;
-    _registerError(error: ArgzodError): void;
-    _registerError(error: ArgzodError, critical?: 'critical'): void | never {
-        this.errors.push(error);
+    private exitError(): never {
+        // Set custom messages for given error
+        this.errors.forEach((e) => e.__applyMessageMap(this.config.messages));
 
-        if (critical) {
-            throw error;
+        if (this.config.onError) {
+            this.config.onError(Array.from(this.errors));
+        } else {
+            console.error(
+                Array.from(this.errors)
+                    .map((e) => e.message)
+                    .map((e) => `ERROR: ${e}`)
+                    .join('\n')
+            );
+        }
+
+        process.exit(1);
+    }
+
+    _registerError(error: ArgzodError): void;
+    _registerError(error: ArgzodError, exit: 'exit'): never;
+
+    _registerError<T>(operation: () => T): T | void;
+    _registerError<T>(operation: () => T, exit: 'exit'): T;
+
+    _registerError(
+        error: ArgzodError | (() => any),
+        exit?: 'exit'
+    ): void | never {
+        let unwrappedError: ArgzodError;
+
+        if (error instanceof ArgzodError) {
+            unwrappedError = error;
+        } else {
+            try {
+                return error();
+            } catch (error) {
+                if (!(error instanceof ArgzodError)) {
+                    throw new Error(
+                        'You should never see this. If you do please create a GitHub issue'
+                    );
+                }
+
+                unwrappedError = error;
+            }
+        }
+
+        this.errors.add(unwrappedError);
+
+        if (exit) {
+            this.exitError();
         }
     }
 
     private cleanUp() {
-        this.errors = [];
+        this.errors = new Set();
     }
 }
