@@ -1,23 +1,22 @@
-
-import type { ProgramConfig } from '../types/program';
+import type { Program } from '../program';
 import type { Command } from '../types/command';
-import type { ParsedEntry} from '../types/arguments';
+import type { ParsedEntry } from '../types/arguments';
 import { schemas } from '../schemas';
-import { matchOptionDefinitionByOptionName, matchParsedOptionsByDefinition, stringifyOptionDefintion } from '../utils/options';
+import {
+    matchOptionDefinitionByOptionName,
+    matchParsedOptionsByDefinition,
+    stringifyOptionDefintion,
+} from '../utils/options';
 import { ArgzodError, ErrorCode } from '../errors';
 import { EntryType } from '../enums';
 
 export class Validator {
-    private _programConfig: ProgramConfig;
+    private program: Program;
     private command: Command;
     private entries: ParsedEntry[];
 
-    constructor(
-        programConfig: ProgramConfig,
-        entries: ParsedEntry[],
-        command: Command
-    ) {
-        this._programConfig = programConfig;
+    constructor(program: Program, entries: ParsedEntry[], command: Command) {
+        this.program = program;
         this.entries = entries;
         this.command = command;
     }
@@ -30,8 +29,11 @@ export class Validator {
             (arg) => arg.type === EntryType.Option
         );
 
-        if (parsedArgs.length > this.command.arguments.length)
-            throw new ArgzodError(ErrorCode.InvalidArguments);
+        if (parsedArgs.length > this.command.arguments.length) {
+            this.program._registerError(
+                new ArgzodError(ErrorCode.InvalidArguments)
+            );
+        }
 
         const validatedArgs = this.command.arguments.map((argDef, index) => {
             const argParseResult = argDef.schema.safeParse(
@@ -39,11 +41,15 @@ export class Validator {
             );
 
             if (!argParseResult.success) {
-                throw new ArgzodError({
-                    code: ErrorCode.Validation,
-                    path: `Argument ${index + 1}`,
-                    ctx: [argParseResult.error],
-                });
+                this.program._registerError(
+                    new ArgzodError({
+                        code: ErrorCode.Validation,
+                        path: `Argument ${index + 1}`,
+                        ctx: [argParseResult.error],
+                    })
+                );
+
+                return null;
             }
 
             return argParseResult.data;
@@ -57,10 +63,12 @@ export class Validator {
             );
 
             if (!result) {
-                throw new ArgzodError({
-                    code: ErrorCode.OptionNotDefined,
-                    path: opt.fullName,
-                });
+                this.program._registerError(
+                    new ArgzodError({
+                        code: ErrorCode.OptionNotDefined,
+                        path: opt.fullName,
+                    })
+                );
             }
         });
 
@@ -79,11 +87,15 @@ export class Validator {
                     const zodResult = schema.safeParse(value);
 
                     if (!zodResult.success) {
-                        throw new ArgzodError({
-                            code: ErrorCode.Validation,
-                            path,
-                            ctx: [zodResult.error],
-                        });
+                        this.program._registerError(
+                            new ArgzodError({
+                                code: ErrorCode.Validation,
+                                path,
+                                ctx: [zodResult.error],
+                            })
+                        );
+
+                        return null;
                     }
 
                     return zodResult.data;

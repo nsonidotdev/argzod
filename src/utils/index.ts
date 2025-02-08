@@ -26,3 +26,11 @@ export const removeObjectKeys = <
 export const isValidOptionName = (string: string) =>
     /^[a-zA-Z0-9-_]+$/.test(string);
 export const isNumericString = (str: string) => /^[0-9]+$/.test(str);
+
+
+export const generateGuid = () => {
+    const S4 = () => {
+       return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+    };
+    return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+}

@@ -34,11 +34,13 @@ export default [
             'no-redeclare': 0, // For enum declarations
 
             'no-unused-vars': 0, // use @typescript-eslint/no-unused-vars plugin for better typescript compatibility
-
+            'no-dupe-class-members': '0',
+            
             /** @see {@link https://typescript-eslint.io/rules/} */
             '@typescript-eslint/no-unused-vars': 1,
             '@typescript-eslint/consistent-type-imports': 1,
-            '@typescript-eslint/consistent-type-definitions': [2, "type"],
+            '@typescript-eslint/no-dupe-class-members': '2',
+            '@typescript-eslint/consistent-type-definitions': [2, 'type'],
 
             'prefer-arrow/prefer-arrow-functions': [
                 1,

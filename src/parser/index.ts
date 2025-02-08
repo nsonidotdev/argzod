@@ -9,21 +9,22 @@ import type { Command } from '../types/command';
 import type { ParsedEntry } from '../types/arguments';
 import { parseInlineOption } from './parse-inline-option';
 import { parseBundledOptions } from './parse-bundled-options';
-import type { ProgramConfig } from '../types/program';
+import type { Program } from '../program';
+import { trySync } from '../utils/try';
 
 export class EntryParser {
     private _command: Command;
-    private _programConfig: ProgramConfig;
+    private program: Program;
 
-    constructor(command: Command, programConfig: ProgramConfig) {
+    constructor(command: Command, program: Program) {
         this._command = command;
-        this._programConfig = programConfig;
+        this.program = program;
     }
 
     public parse(args: string[]): ParsedEntry[] {
         const formattedEntries = this._format(args);
         const mergedEntries = this._merge(formattedEntries);
-        
+
         return mergedEntries;
     }
 
@@ -51,18 +52,29 @@ export class EntryParser {
                 entry.includes('=') &&
                 (leadingDashesCount === 1 || leadingDashesCount === 2)
             ) {
-                const option = parseInlineOption({
-                    entry,
-                    leadingDashes: leadingDashesCount,
-                });
-                return acc.concat(option);
+                const option = trySync(() =>
+                    parseInlineOption({
+                        entry,
+                        leadingDashes: leadingDashesCount,
+                    })
+                );
+                if (option.success) {
+                    return acc.concat(option.data);
+                } else {
+                    this.program._registerError(option.error);
+                    return acc;
+                }
             }
 
             const optionName = entry.slice(leadingDashesCount);
             if (!isValidOptionName(optionName)) {
-                throw new ArgzodError({
-                    code: ErrorCode.InvalidOption,
-                });
+                this.program._registerError(
+                    new ArgzodError({
+                        code: ErrorCode.InvalidOption,
+                    })
+                );
+
+                return acc;
             }
 
             if (leadingDashesCount === 1) {
@@ -98,17 +110,25 @@ export class EntryParser {
 
                     return acc;
                 } else {
-                    throw new ArgzodError({
-                        code: ErrorCode.InvalidOption,
-                        path: entry,
-                    });
+                    this.program._registerError(
+                        new ArgzodError({
+                            code: ErrorCode.InvalidOption,
+                            path: entry,
+                        })
+                    );
+
+                    return acc;
                 }
             }
 
-            throw new ArgzodError({
-                code: ErrorCode.InvalidOption,
-                path: entry,
-            });
+            this.program._registerError(
+                new ArgzodError({
+                    code: ErrorCode.InvalidOption,
+                    path: entry,
+                })
+            );
+
+            return acc;
         }, []);
     }
 
@@ -136,7 +156,11 @@ export class EntryParser {
                         index
                     );
                     if (optionValue.length && entry.valueStyle) {
-                        throw new ArgzodError(ErrorCode.InvalidOption);
+                        this.program._registerError(
+                            new ArgzodError(ErrorCode.InvalidOption)
+                        );
+
+                        return null;
                     }
 
                     return {
@@ -161,7 +185,8 @@ export class EntryParser {
         optionIndex: number
     ): string | string[] {
         if (entries[optionIndex]?.type !== EntryType.Option) {
-            throw new ArgzodError(ErrorCode.Internal);
+            this.program._registerError(new ArgzodError(ErrorCode.Internal));
+            return '';
         }
 
         let shouldIterate = true;

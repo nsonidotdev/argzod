@@ -3,5 +3,5 @@ import type { ArgzodError } from "../errors";
 
 export type ProgramConfig = {
     messages?: MessageMap;
-    onError?: (error: ArgzodError) => void;
+    onError?: (errors: ArgzodError[]) => void;
 };
