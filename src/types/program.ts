@@ -1,7 +1,8 @@
-import type { MessageMap } from '.';
-import type { ArgzodError } from '../errors';
+import type { GroupedErrors, MessageMap } from '.';
+import type { ErrorLevel } from '../enums';
 
 export type ProgramConfig = {
     messages?: MessageMap;
-    onError?: (errors: ArgzodError[]) => void;
+    onError?: (errors: GroupedErrors) => void;
+    undefinedOptionsBehavior?: ErrorLevel;
 };

@@ -1,4 +1,7 @@
 import type { z } from 'zod';
+import type { ArgzodError } from '../errors';
+import type { GroupedErrors } from '../types';
+import { ErrorLevel } from '../enums';
 
 export const countLeadingDashes = (arg: string) => {
     const indexOfDash = [...arg].findIndex((char) => char !== '-');
@@ -28,4 +31,24 @@ export const generateGuid = () => {
         return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
     };
     return S4() + S4() + '-' + S4() + '-' + S4() + '-' + S4() + '-' + S4() + S4() + S4();
+};
+
+export const groupErrors = (errors: ArgzodError[], matcher: (error: ArgzodError) => ErrorLevel): GroupedErrors => {
+    const groupedErrors = errors.reduce<GroupedErrors>(
+        (acc, error) => {
+            const errorLevel = matcher(error);
+
+            return {
+                ...acc,
+                [errorLevel]: acc[errorLevel].concat(error),
+            };
+        },
+        {
+            [ErrorLevel.Error]: [],
+            [ErrorLevel.Warn]: [],
+            [ErrorLevel.Ignore]: [],
+        }
+    );
+
+    return groupedErrors;
 };

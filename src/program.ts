@@ -3,9 +3,15 @@ import { ArgzodError, ErrorCode } from './errors';
 import type { ProgramConfig } from './types/program';
 import type { Command } from './command';
 import { createCommand } from './command';
-import { generateGuid } from './utils';
+import { generateGuid, groupErrors } from './utils';
+import { ErrorLevel } from './enums';
+import { WARN_CHAR } from './constants';
+import chalk from 'chalk';
+import type { GroupedErrors } from './types';
 
-const DEFAULT_CONFIG: ProgramConfig = {};
+const DEFAULT_CONFIG: ProgramConfig = {
+    undefinedOptionsBehavior: ErrorLevel.Error,
+};
 
 export const createProgram = (config?: ProgramConfig) => new Program(config);
 export type { Program };
@@ -27,14 +33,15 @@ class Program<T extends string = string> {
     }
 
     run(args: string[] = process.argv.slice(2)) {
-        // clean up previous run data
         this.cleanUp();
 
         const { process: processCommand, targetCommand } = this._matchCommand(args);
         const { validatedData, parsedEntries } = processCommand();
 
         if (this.errors.size) {
-            this.exitError();
+            const { error } = this.logErrors();
+
+            if (error.length) process.exit(1);
         }
 
         targetCommand.action({
@@ -100,22 +107,35 @@ class Program<T extends string = string> {
         };
     }
 
-    private exitError(): never {
+    private logErrors(): GroupedErrors {
         // Set custom messages for given error
         this.errors.forEach((e) => e.__applyMessageMap(this.config.messages));
 
-        if (this.config.onError) {
-            this.config.onError(Array.from(this.errors));
-        } else {
-            console.error(
-                Array.from(this.errors)
-                    .map((e) => e.message)
-                    .map((e) => `ERROR: ${e}`)
-                    .join('\n')
-            );
-        }
+        const errorsArray = Array.from(this.errors);
 
-        process.exit(1);
+        const groupedErrors = groupErrors(errorsArray, (error) => {
+            if (this.config.undefinedOptionsBehavior === ErrorLevel.Warn && error.code === ErrorCode.OptionNotDefined) {
+                return ErrorLevel.Warn;
+            }
+
+            return ErrorLevel.Error;
+        });
+
+        this.config.onError?.(groupedErrors);
+
+        groupedErrors.warn.forEach((e) => {
+            console.log(
+                ` >  ${chalk.yellow(`${WARN_CHAR} ${chalk.bold('Warning')}`)}${e.path ? ` | ${chalk.bold(e.path)}` : ''} | ${e.message}`
+            );
+        });
+
+        groupedErrors.error.forEach((e) => {
+            console.log(
+                ` >  ${chalk.red(`${WARN_CHAR} ${chalk.bold('Error')}`)}${e.path ? ` | ${chalk.bold(e.path)}` : ''} | ${e.message}`
+            );
+        });
+
+        return groupedErrors;
     }
 
     _registerError(error: ArgzodError): void;
@@ -144,7 +164,9 @@ class Program<T extends string = string> {
         this.errors.add(unwrappedError);
 
         if (exit) {
-            this.exitError();
+            this.logErrors();
+
+            process.exit(1);
         }
     }
 
