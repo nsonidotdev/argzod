@@ -92,7 +92,7 @@ class Program<T extends string = string> {
             this._registerError(
                 new ArgzodError({
                     code: ErrorCode.CommandNotFound,
-                    ctx: [undefined],
+                    ctx: [commandLine[0]],
                 }),
                 'exit'
             );
