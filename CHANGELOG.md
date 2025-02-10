@@ -1,5 +1,13 @@
 # argzod
 
+## 0.5.1
+
+### Patch Changes
+
+- 053ffa8: Ability to pass custom error messages and onError handler
+- ac79b9d: Less error codes and code refactoring
+- 5a1fceb: Colorized errors and warnings. Error grouping by levels
+
 ## 0.5.0
 
 ### Minor Changes
