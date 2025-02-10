@@ -15,7 +15,7 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"dev": "tsup src/index.ts --format esm --watch",
-		"build": "tsup src/index.ts --format esm,cjs --dts",
+		"build": "tsup src/index.ts --format esm,cjs --dts --minify",
 		"format": "prettier -c ./src --write",
 		"lint": "eslint --cache ./src",
 		"lint:fix": "eslint --cache --fix ./src",
