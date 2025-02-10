@@ -1,3 +1,4 @@
+import { ErrorLevel } from '../enums';
 import type { MessageMap } from '../types';
 import type { ErrorCode } from './codes';
 import { errorMessageMap } from './messages';
@@ -8,13 +9,14 @@ export class ArgzodError<
     TMessage extends (typeof errorMessageMap)[TCode] = (typeof errorMessageMap)[TCode],
 > extends Error {
     #code: TCode;
+    level: ErrorLevel; 
     path?: string;
     private ctx: TMessage extends (...args: any) => string ? Parameters<TMessage> : undefined;
 
     constructor(
         data: TMessage extends (...args: any) => string
-            ? { code: TCode; ctx: Parameters<TMessage>; path?: string }
-            : { code: TCode; path?: string } | TCode,
+            ? { code: TCode; ctx: Parameters<TMessage>; path?: string; level?: ErrorLevel }
+            : { code: TCode; path?: string; level?: ErrorLevel  } | TCode,
         customMessages?: MessageMap
     ) {
         const messages = {
@@ -26,6 +28,7 @@ export class ArgzodError<
         let ctx: any = undefined;
         let code: TCode;
         let path: undefined | string;
+        let errorLevel: ErrorLevel = ErrorLevel.Error;
 
         if (typeof data === 'string') {
             code = data as TCode;
@@ -42,6 +45,7 @@ export class ArgzodError<
                 message = messages[data.code] as string;
                 code = data.code;
                 path = data.path;
+                if (data.level) errorLevel = data.level;
             }
         }
 
@@ -52,6 +56,7 @@ export class ArgzodError<
         this.ctx = ctx;
         this.#code = code;
         this.path = path;
+        this.level = errorLevel;
     }
 
     get code() {

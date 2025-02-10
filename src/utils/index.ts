@@ -33,10 +33,10 @@ export const generateGuid = () => {
     return S4() + S4() + '-' + S4() + '-' + S4() + '-' + S4() + '-' + S4() + S4() + S4();
 };
 
-export const groupErrors = (errors: ArgzodError[], matcher: (error: ArgzodError) => ErrorLevel): GroupedErrors => {
+export const groupErrors = (errors: ArgzodError[], matcher: (error: ArgzodError) => ErrorLevel | void): GroupedErrors => {
     const groupedErrors = errors.reduce<GroupedErrors>(
         (acc, error) => {
-            const errorLevel = matcher(error);
+            const errorLevel = matcher(error) ?? error.level;
 
             return {
                 ...acc,

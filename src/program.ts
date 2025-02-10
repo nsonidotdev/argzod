@@ -117,8 +117,6 @@ class Program<T extends string = string> {
             if (this.config.undefinedOptionsBehavior === ErrorLevel.Warn && error.code === ErrorCode.OptionNotDefined) {
                 return ErrorLevel.Warn;
             }
-
-            return ErrorLevel.Error;
         });
 
         this.config.onError?.(groupedErrors);
