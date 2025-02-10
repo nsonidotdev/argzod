@@ -1,16 +1,11 @@
-import type {
-    ArgumentDefinition,
-    OptionDefinition,
-    ParsedEntry,
-} from './arguments';
+import type { ArgumentDefinition, OptionDefinition, ParsedEntry } from './arguments';
 import type { InferCommandArguments, InferCommandOptions } from './utils';
 
 export type CommandName<T extends string = string> = undefined | T;
 
-export type ActionFn<
-    TArgs extends Array<any> = Array<any>,
-    TOpts extends Record<string, any> = Record<string, any>,
-> = (actionData: ActionData<TArgs, TOpts>) => void;
+export type ActionFn<TArgs extends Array<any> = Array<any>, TOpts extends Record<string, any> = Record<string, any>> = (
+    actionData: ActionData<TArgs, TOpts>
+) => void;
 
 export type ActionData<
     TArgs extends Array<any> = Array<any>,

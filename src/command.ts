@@ -1,16 +1,7 @@
-import { EntryType } from '../dist';
 import { EntryParser } from './parser';
-import { Program } from './program';
-import type {
-    ActionData,
-    ActionFn,
-    CommandArguments,
-    CommandDefinition,
-    CommandName,
-    CommandOptions,
-} from './types/command';
-import { InferCommandArguments, InferCommandOptions } from './types/utils';
-import { trySync } from './utils/try';
+import type { Program } from './program';
+import type { ActionData, CommandArguments, CommandDefinition, CommandName, CommandOptions } from './types/command';
+import type { InferCommandArguments, InferCommandOptions } from './types/utils';
 import { Validator } from './validator';
 
 export const createCommand = <
@@ -19,13 +10,7 @@ export const createCommand = <
 >(
     options: CommandDefinition<string, TArgs, TOpts> & { program: Program }
 ): Command => {
-    return new Command(
-        options as CommandDefinition<
-            string,
-            CommandArguments,
-            CommandOptions
-        > & { program: Program }
-    );
+    return new Command(options as CommandDefinition<string, CommandArguments, CommandOptions> & { program: Program });
 };
 
 export type { Command };
@@ -33,12 +18,7 @@ export type { Command };
 class Command {
     program: Program;
     name: CommandName<string>;
-    action: (
-        arg: ActionData<
-            InferCommandArguments<CommandArguments>,
-            InferCommandOptions<CommandOptions>
-        >
-    ) => void;
+    action: (arg: ActionData<InferCommandArguments<CommandArguments>, InferCommandOptions<CommandOptions>>) => void;
     options: CommandOptions;
     args: CommandArguments;
 
@@ -56,16 +36,10 @@ class Command {
 
     process(entries: string[]) {
         const parser = new EntryParser(this, this.program);
-        const parsedEntries = this.program._registerError(
-            () => parser.parse(entries),
-            'exit'
-        );
+        const parsedEntries = this.program._registerError(() => parser.parse(entries), 'exit');
 
         const validator = new Validator(this, this.program);
-        const validatedData = this.program._registerError(
-            () => validator.validate(parsedEntries),
-            'exit'
-        );
+        const validatedData = this.program._registerError(() => validator.validate(parsedEntries), 'exit');
 
         return {
             parser,

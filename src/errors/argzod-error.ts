@@ -5,14 +5,11 @@ import type { ErrorMessageFn } from './types';
 
 export class ArgzodError<
     TCode extends ErrorCode = any,
-    TMessage extends
-        (typeof errorMessageMap)[TCode] = (typeof errorMessageMap)[TCode],
+    TMessage extends (typeof errorMessageMap)[TCode] = (typeof errorMessageMap)[TCode],
 > extends Error {
     #code: TCode;
     path?: string;
-    private ctx: TMessage extends (...args: any) => string
-        ? Parameters<TMessage>
-        : undefined;
+    private ctx: TMessage extends (...args: any) => string ? Parameters<TMessage> : undefined;
 
     constructor(
         data: TMessage extends (...args: any) => string
@@ -36,9 +33,7 @@ export class ArgzodError<
         } else {
             // @ts-expect-error
             if ('ctx' in data) {
-                const messageFn = messages[data.code] as (
-                    ...arg: any
-                ) => string;
+                const messageFn = messages[data.code] as (...arg: any) => string;
                 message = messageFn(...data.ctx);
                 ctx = data.ctx;
                 code = data.code;

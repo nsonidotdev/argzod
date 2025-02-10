@@ -20,15 +20,12 @@ export const parseBundledOptions = ({
 
     if (firstUndefinedOptionIndex > 0) {
         // first undefined option (value start index) should be at least second by its index so there is option name
-        const optionsToBundle = bundledOptions.slice(
-            0,
-            firstUndefinedOptionIndex
-        );
+        const optionsToBundle = bundledOptions.slice(0, firstUndefinedOptionIndex);
         const attachedValue = name.slice(firstUndefinedOptionIndex);
 
         return optionsToBundle.map((optName, index) => {
             const isLast = index === optionsToBundle.length - 1;
-            
+
             return {
                 fullName: '-' + optName,
                 original: entry,
@@ -46,7 +43,7 @@ export const parseBundledOptions = ({
     }
 
     return bundledOptions.map((opt) => {
-       return {
+        return {
             type: EntryType.Option,
             value: '',
             name: opt,

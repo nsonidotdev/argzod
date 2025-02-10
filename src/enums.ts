@@ -15,6 +15,6 @@ export type EntryType = ObjectValues<typeof EntryType>;
 export const OptionValueStyle = {
     Inline: 'inline', // --option=value
     SpaceSeparated: 'space', // --option value
-    Attached: 'attached' // -ovalue
+    Attached: 'attached', // -ovalue
 } as const;
 export type OptionValueStyle = ObjectValues<typeof OptionValueStyle>;

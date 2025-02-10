@@ -8,9 +8,7 @@ type Result<T> =
           error: any;
       };
 
-export const tryAsync = async <T>(
-    dataSource: Promise<T> | (() => Promise<T>)
-): Promise<Result<T>> => {
+export const tryAsync = async <T>(dataSource: Promise<T> | (() => Promise<T>)): Promise<Result<T>> => {
     try {
         let data: T | Promise<T>;
 
@@ -44,4 +42,4 @@ export const trySync = <T>(dataSource: () => T): Result<T> => {
             error,
         };
     }
-}
+};

@@ -1,12 +1,8 @@
-import type {
-    CommandArguments,
-    CommandOptions,
-    CommandDefinition,
-} from './types/command';
-import { trySync } from './utils/try';
+import type { CommandArguments, CommandOptions, CommandDefinition } from './types/command';
 import { ArgzodError, ErrorCode } from './errors';
 import type { ProgramConfig } from './types/program';
-import { Command, createCommand } from './command';
+import type { Command } from './command';
+import { createCommand } from './command';
 import { generateGuid } from './utils';
 
 const DEFAULT_CONFIG: ProgramConfig = {};
@@ -34,8 +30,7 @@ class Program<T extends string = string> {
         // clean up previous run data
         this.cleanUp();
 
-        const { process: processCommand, targetCommand } =
-            this._matchCommand(args);
+        const { process: processCommand, targetCommand } = this._matchCommand(args);
         const { validatedData, parsedEntries } = processCommand();
 
         if (this.errors.size) {
@@ -49,10 +44,9 @@ class Program<T extends string = string> {
         });
     }
 
-    command<
-        const TArgs extends CommandArguments,
-        const TOpts extends CommandOptions,
-    >(options: CommandDefinition<T, TArgs, TOpts>): Command {
+    command<const TArgs extends CommandArguments, const TOpts extends CommandOptions>(
+        options: CommandDefinition<T, TArgs, TOpts>
+    ): Command {
         if (this.commands.find((c) => c.name === options.name)) {
             throw new ArgzodError({
                 code: ErrorCode.InvalidDefinitions,
@@ -81,14 +75,11 @@ class Program<T extends string = string> {
     }
 
     private _matchCommand(commandLine: string[]) {
-        const namedCommand = this.commands.find(
-            (c) => c.name === commandLine[0]
-        );
+        const namedCommand = this.commands.find((c) => c.name === commandLine[0]);
         const indexCommand = this.commands.find((c) => c.name === undefined);
         const targetCommand = namedCommand ?? indexCommand;
 
-        commandLine =
-            targetCommand === indexCommand ? commandLine : commandLine.slice(1);
+        commandLine = targetCommand === indexCommand ? commandLine : commandLine.slice(1);
 
         if (!targetCommand) {
             this._registerError(
@@ -133,10 +124,7 @@ class Program<T extends string = string> {
     _registerError<T>(operation: () => T): T | void;
     _registerError<T>(operation: () => T, exit: 'exit'): T;
 
-    _registerError(
-        error: ArgzodError | (() => any),
-        exit?: 'exit'
-    ): void | never {
+    _registerError(error: ArgzodError | (() => any), exit?: 'exit'): void | never {
         let unwrappedError: ArgzodError;
 
         if (error instanceof ArgzodError) {
@@ -146,9 +134,7 @@ class Program<T extends string = string> {
                 return error();
             } catch (error) {
                 if (!(error instanceof ArgzodError)) {
-                    throw new Error(
-                        'You should never see this. If you do please create a GitHub issue'
-                    );
+                    throw new Error('You should never see this. If you do please create a GitHub issue');
                 }
 
                 unwrappedError = error;

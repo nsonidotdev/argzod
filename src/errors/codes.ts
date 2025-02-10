@@ -7,6 +7,6 @@ export const ErrorCode = {
     OptionNotDefined: 'option-not-defined', // Option was not defined in any command
     InvalidArguments: 'invalid-args', // Any error related to positional arguments
     CommandNotFound: 'command-not-found', // Command was not defined by user
-    InvalidDefinitions: 'invalid-definitions' // Program, command, option or argument definitions are wrong
+    InvalidDefinitions: 'invalid-definitions', // Program, command, option or argument definitions are wrong
 } as const;
 export type ErrorCode = ObjectValues<typeof ErrorCode>;
