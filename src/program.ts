@@ -123,13 +123,13 @@ class Program<T extends string = string> {
 
         groupedErrors.warn.forEach((e) => {
             console.log(
-                ` >  ${chalk.yellow(`${WARN_CHAR} ${chalk.bold('Warning')}`)}${e.path ? ` | ${chalk.bold(e.path)}` : ''} | ${e.message}`
+                `${chalk.yellow(`[${WARN_CHAR} ${chalk.bold('Warning')}]`)}${e.path ? ` | ${chalk.bold(e.path)}` : ''} | ${e.message}`
             );
         });
 
         groupedErrors.error.forEach((e) => {
             console.log(
-                ` >  ${chalk.red(`${WARN_CHAR} ${chalk.bold('Error')}`)}${e.path ? ` | ${chalk.bold(e.path)}` : ''} | ${e.message}`
+                `${chalk.red(`[${WARN_CHAR} ${chalk.bold('Error')}]`)}${e.path ? ` | ${chalk.bold(e.path)}` : ''} | ${e.message}`
             );
         });
 
