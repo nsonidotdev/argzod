@@ -8,8 +8,10 @@ import { ErrorLevel } from './enums';
 import { WARN_CHAR } from './constants';
 import chalk from 'chalk';
 import type { GroupedErrors } from './types';
+import { getOptionNames } from './utils/options';
 
 const DEFAULT_CONFIG: ProgramConfig = {
+    name: '',
     undefinedOptionsBehavior: ErrorLevel.Error,
 };
 
@@ -34,9 +36,15 @@ class Program<T extends string = string> {
 
     run(args: string[] = process.argv.slice(2)) {
         this.cleanUp();
-
-        const { process: processCommand, targetCommand } = this._matchCommand(args);
+        const { process: processCommand, targetCommand, indexCommand } = this.matchCommand(args);
         const { validatedData, parsedEntries } = processCommand();
+
+        const isHelp = validatedData.validatedOptions.help;
+
+        if (isHelp) {
+            this.logHelp({ targetCommand, indexCommand });
+            process.exit(0);
+        }
 
         if (this.errors.size) {
             const { error } = this.logErrors();
@@ -81,7 +89,7 @@ class Program<T extends string = string> {
         return this;
     }
 
-    private _matchCommand(commandLine: string[]) {
+    private matchCommand(commandLine: string[]) {
         const namedCommand = this.commands.find((c) => c.name === commandLine[0]);
         const indexCommand = this.commands.find((c) => c.name === undefined);
         const targetCommand = namedCommand ?? indexCommand;
@@ -105,6 +113,69 @@ class Program<T extends string = string> {
             commandEntries: commandLine,
             process: () => targetCommand.process(commandLine),
         };
+    }
+
+    private logHelp({ indexCommand, targetCommand }: { targetCommand: Command; indexCommand?: Command }) {
+        const { name: programName, description: programDescription } = this.config;
+
+        const logOptions = (command: Command) => {
+            console.log(chalk.bold('Options'));
+
+            alignLog(
+                Object.values(command.options).map((option) => {
+                    return {
+                        left: getOptionNames(option),
+                        right: option.description ? chalk.italic(option.description) : '',
+                    };
+                })
+            );
+        };
+
+        const alignLog = (rows: Array<Record<'left' | 'right', string>>) => {
+            const maxLeftLength = Math.max(...rows.map((row) => row.left.length));
+            const padding = 6;
+
+            rows.forEach((row) => {
+                console.log(`    ${row.left.padEnd(maxLeftLength + padding)}${row.right}`);
+            });
+        };
+
+        if (targetCommand === indexCommand) {
+            if (programDescription) console.log(programDescription + '\n');
+
+            console.log(`${chalk.bold('Usage')} \n  ${programName} [command] [flags] \n`);
+
+            console.log(chalk.bold('Commands'));
+
+            alignLog(
+                this.commands
+                    .sort((a, b) => (!b ? 1 : -1))
+
+                    .map((c) => {
+                        const commandName = c.name ?? programName;
+
+                        return {
+                            left: commandName,
+                            right: c.description ? chalk.italic(c.description) : '',
+                        };
+                    })
+            );
+
+            console.log('');
+            logOptions(targetCommand);
+            console.log('');
+        } else {
+            const hasArgs = !!targetCommand.args.length;
+            const { description, name } = targetCommand;
+            console.log('');
+
+            if (description)
+                console.log(`${programName} ${name}      ${description ? `${chalk.italic(description)}` : ''}` + '\n');
+
+            console.log(`${chalk.bold('Usage')} \n  ${programName} ${name}${hasArgs ? ` [args]` : ''} [flags] \n`);
+
+            logOptions(targetCommand);
+        }
     }
 
     private logErrors(): GroupedErrors {

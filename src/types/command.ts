@@ -16,7 +16,7 @@ export type ActionData<
     parsedCommandLine: ParsedEntry[];
 };
 
-export type CommandOptions = Record<string, OptionDefinition>;
+export type CommandOptions = Record<string, OptionDefinition> & Partial<{ help: OptionDefinition }>;
 export type CommandArguments = Array<ArgumentDefinition>;
 
 export type CommandDefinition<
@@ -25,6 +25,7 @@ export type CommandDefinition<
     TOpts extends CommandOptions = Record<string, never>,
 > = {
     name?: TName;
+    description?: string;
     args?: TArgs;
     options?: TOpts;
     action: ActionFn<InferCommandArguments<TArgs>, InferCommandOptions<TOpts>>;

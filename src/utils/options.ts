@@ -47,3 +47,19 @@ export const stringifyOptionDefintion = ([key, defintion]: [string, OptionDefini
         return isLong(key) ? '--' + key : '-' + key;
     }
 };
+
+export const stringifyOptionName = (name: string): string => {
+    if (name.length > 1) {
+        return '--' + name;
+    } else {
+        return '-' + name;
+    }
+};
+
+export const getOptionNames = (opt: OptionDefinition) => {
+    if (opt.name instanceof Array) {
+        return opt.name.map(optName => stringifyOptionName(optName)).join(', ')
+    } else {
+        return stringifyOptionName(opt.name);
+    }
+};
