@@ -1,4 +1,3 @@
-import type { OptionDefinition } from './types/arguments';
 import { EntryParser } from './parser';
 import type { Program } from './program';
 import type { ActionData, CommandArguments, CommandDefinition, CommandName, CommandOptions } from './types/command';

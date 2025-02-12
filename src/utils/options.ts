@@ -1,11 +1,12 @@
-import type { ParsedOption, OptionDefinition } from '../types/arguments';
+import type { ParsedOption } from '../types/arguments';
 import type { CommandOptions } from '../types/command';
+import type { OptionDef } from '../types/option-def';
 
 export const matchOptionDefinitionByOptionName = <T extends string>(
     option: string,
     definitions: CommandOptions
-): [T, OptionDefinition] | undefined => {
-    return Object.entries<OptionDefinition>(definitions).find(([key, definition]) => {
+): [T, OptionDef] | undefined => {
+    return Object.entries<OptionDef>(definitions).find(([key, definition]) => {
         if (typeof definition.name === 'undefined') {
             return key === option;
         } else if (typeof definition.name === 'string') {
@@ -13,11 +14,11 @@ export const matchOptionDefinitionByOptionName = <T extends string>(
         } else {
             return definition.name.some((name) => name === option);
         }
-    }) as [T, OptionDefinition] | undefined;
+    }) as [T, OptionDef] | undefined;
 };
 
 export const matchParsedOptionsByDefinition = (
-    [defKey, definition]: [string, OptionDefinition],
+    [defKey, definition]: [string, OptionDef],
     parsedOptions: ParsedOption[]
 ): ParsedOption[] => {
     const definitionNames: string[] = [];
@@ -35,7 +36,7 @@ export const matchParsedOptionsByDefinition = (
     });
 };
 
-export const stringifyOptionDefintion = ([key, defintion]: [string, OptionDefinition]): string => {
+export const stringifyOptionDefintion = ([key, defintion]: [string, OptionDef]): string => {
     const isLong = (option: string) => option.length > 1;
 
     if (typeof defintion.name === 'string') {
@@ -56,7 +57,7 @@ export const stringifyOptionName = (name: string): string => {
     }
 };
 
-export const getOptionNames = (opt: OptionDefinition) => {
+export const getOptionNames = (opt: OptionDef) => {
     if (opt.name instanceof Array) {
         return opt.name.map((optName) => stringifyOptionName(optName)).join(', ');
     } else {

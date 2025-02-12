@@ -22,12 +22,6 @@ export type ParsedPositionalArgument = {
 
 export type ParsedEntry = ParsedOption | ParsedPositionalArgument;
 
-export type OptionDefinition = {
-    description?: string;
-    schema?: z.ZodType<any>;
-    name: Array<string> | string;
-};
-
 export type ArgumentDefinition = {
     description?: string;
     schema: z.ZodType<any>;

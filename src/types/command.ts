@@ -1,4 +1,5 @@
-import type { ArgumentDefinition, OptionDefinition, ParsedEntry } from './arguments';
+import type { ArgumentDefinition, ParsedEntry } from './arguments';
+import type { OptionDef } from './option-def';
 import type { InferCommandArguments, InferCommandOptions } from './utils';
 
 export type CommandName<T extends string = string> = undefined | T;
@@ -16,7 +17,7 @@ export type ActionData<
     parsedCommandLine: ParsedEntry[];
 };
 
-export type CommandOptions = Record<string, OptionDefinition> & Partial<{ help: OptionDefinition }>;
+export type CommandOptions = Record<string, OptionDef> & Partial<{ help: OptionDef }>;
 export type CommandArguments = Array<ArgumentDefinition>;
 
 export type CommandDefinition<
