@@ -35,7 +35,7 @@ class Command {
         this.options = this.attachBuiltIns(opts.options ?? {});
         this.args = opts.args ?? [];
         this.program = opts.program;
-        this.description = opts.description
+        this.description = opts.description;
     }
 
     process(entries: string[]) {

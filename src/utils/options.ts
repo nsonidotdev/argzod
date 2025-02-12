@@ -58,7 +58,7 @@ export const stringifyOptionName = (name: string): string => {
 
 export const getOptionNames = (opt: OptionDefinition) => {
     if (opt.name instanceof Array) {
-        return opt.name.map(optName => stringifyOptionName(optName)).join(', ')
+        return opt.name.map((optName) => stringifyOptionName(optName)).join(', ');
     } else {
         return stringifyOptionName(opt.name);
     }

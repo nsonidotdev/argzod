@@ -9,14 +9,14 @@ export class ArgzodError<
     TMessage extends (typeof errorMessageMap)[TCode] = (typeof errorMessageMap)[TCode],
 > extends Error {
     #code: TCode;
-    level: ErrorLevel; 
+    level: ErrorLevel;
     path?: string;
     private ctx: TMessage extends (...args: any) => string ? Parameters<TMessage> : undefined;
 
     constructor(
         data: TMessage extends (...args: any) => string
             ? { code: TCode; ctx: Parameters<TMessage>; path?: string; level?: ErrorLevel }
-            : { code: TCode; path?: string; level?: ErrorLevel  } | TCode,
+            : { code: TCode; path?: string; level?: ErrorLevel } | TCode,
         customMessages?: MessageMap
     ) {
         const messages = {

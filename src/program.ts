@@ -8,7 +8,7 @@ import { ErrorLevel } from './enums';
 import { WARN_CHAR } from './constants';
 import chalk from 'chalk';
 import type { GroupedErrors } from './types';
-import { getOptionNames } from './utils/options';
+import { HelpLogger } from './utils/help-logger';
 
 const DEFAULT_CONFIG: ProgramConfig = {
     name: '',
@@ -41,8 +41,8 @@ class Program<T extends string = string> {
 
         const isHelp = validatedData.validatedOptions.help;
 
+        this.logHelp({ targetCommand, indexCommand });
         if (isHelp) {
-            this.logHelp({ targetCommand, indexCommand });
             process.exit(0);
         }
 
@@ -116,66 +116,15 @@ class Program<T extends string = string> {
     }
 
     private logHelp({ indexCommand, targetCommand }: { targetCommand: Command; indexCommand?: Command }) {
-        const { name: programName, description: programDescription } = this.config;
+        const helpLogger = new HelpLogger({
+            commands: this.commands,
+            targetCommand,
+            isIndexCommand: targetCommand === indexCommand,
+            programName: this.config.name,
+            programDescription: this.config.description,
+        });
 
-        const logOptions = (command: Command) => {
-            console.log(chalk.bold('Options'));
-
-            alignLog(
-                Object.values(command.options).map((option) => {
-                    return {
-                        left: getOptionNames(option),
-                        right: option.description ? chalk.italic(option.description) : '',
-                    };
-                })
-            );
-        };
-
-        const alignLog = (rows: Array<Record<'left' | 'right', string>>) => {
-            const maxLeftLength = Math.max(...rows.map((row) => row.left.length));
-            const padding = 6;
-
-            rows.forEach((row) => {
-                console.log(`    ${row.left.padEnd(maxLeftLength + padding)}${row.right}`);
-            });
-        };
-
-        if (targetCommand === indexCommand) {
-            if (programDescription) console.log(programDescription + '\n');
-
-            console.log(`${chalk.bold('Usage')} \n  ${programName} [command] [flags] \n`);
-
-            console.log(chalk.bold('Commands'));
-
-            alignLog(
-                this.commands
-                    .sort((a, b) => (!b ? 1 : -1))
-
-                    .map((c) => {
-                        const commandName = c.name ?? programName;
-
-                        return {
-                            left: commandName,
-                            right: c.description ? chalk.italic(c.description) : '',
-                        };
-                    })
-            );
-
-            console.log('');
-            logOptions(targetCommand);
-            console.log('');
-        } else {
-            const hasArgs = !!targetCommand.args.length;
-            const { description, name } = targetCommand;
-            console.log('');
-
-            if (description)
-                console.log(`${programName} ${name}      ${description ? `${chalk.italic(description)}` : ''}` + '\n');
-
-            console.log(`${chalk.bold('Usage')} \n  ${programName} ${name}${hasArgs ? ` [args]` : ''} [flags] \n`);
-
-            logOptions(targetCommand);
-        }
+        helpLogger.log();
     }
 
     private logErrors(): GroupedErrors {

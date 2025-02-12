@@ -22,6 +22,6 @@ export type OptionValueStyle = ObjectValues<typeof OptionValueStyle>;
 export const ErrorLevel = {
     Error: 'error',
     Warn: 'warn',
-    Ignore: 'ignore'
+    Ignore: 'ignore',
 } as const;
 export type ErrorLevel = ObjectValues<typeof ErrorLevel>;
