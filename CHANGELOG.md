@@ -1,5 +1,11 @@
 # argzod
 
+## 0.5.2
+
+### Patch Changes
+
+- 04786ef: Basic help text message
+
 ## 0.5.1
 
 ### Patch Changes
