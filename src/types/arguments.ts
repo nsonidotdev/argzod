@@ -5,7 +5,7 @@ export type ParsedOption = {
     type: (typeof EntryType)['Option'];
     variant: OptionVariant;
     name: string;
-    value: string | string[];
+    value: string[];
     fullName: string;
     valueStyle?: OptionValueStyle;
     original: string;

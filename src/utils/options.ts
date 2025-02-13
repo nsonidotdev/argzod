@@ -6,10 +6,8 @@ export const matchOptionDefinitionByOptionName = <T extends string>(
     option: string,
     definitions: CommandOptions
 ): [T, OptionDef] | undefined => {
-    return Object.entries<OptionDef>(definitions).find(([key, definition]) => {
-        if (typeof definition.name === 'undefined') {
-            return key === option;
-        } else if (typeof definition.name === 'string') {
+    return Object.entries<OptionDef>(definitions).find(([, definition]) => {
+        if (typeof definition.name === 'string') {
             return definition.name === option;
         } else {
             return definition.name.some((name) => name === option);
@@ -18,14 +16,12 @@ export const matchOptionDefinitionByOptionName = <T extends string>(
 };
 
 export const matchParsedOptionsByDefinition = (
-    [defKey, definition]: [string, OptionDef],
+    definition: OptionDef,
     parsedOptions: ParsedOption[]
 ): ParsedOption[] => {
     const definitionNames: string[] = [];
 
-    if (typeof definition.name === 'undefined') {
-        definitionNames.push(defKey);
-    } else if (typeof definition.name === 'string') {
+    if (typeof definition.name === 'string') {
         definitionNames.push(definition.name);
     } else {
         definitionNames.push(...definition.name);
@@ -36,16 +32,14 @@ export const matchParsedOptionsByDefinition = (
     });
 };
 
-export const stringifyOptionDefintion = ([key, defintion]: [string, OptionDef]): string => {
+export const stringifyOptionDefintion = (defintion: OptionDef): string => {
     const isLong = (option: string) => option.length > 1;
 
     if (typeof defintion.name === 'string') {
         return isLong(defintion.name) ? '--' + defintion.name : '-' + defintion.name;
-    } else if (defintion.name instanceof Array && defintion.name.length > 0) {
+    } else {
         const name = defintion.name[0]!;
         return isLong(name) ? '--' + name : '-' + name;
-    } else {
-        return isLong(key) ? '--' + key : '-' + key;
     }
 };
 
@@ -64,3 +58,17 @@ export const getOptionNames = (opt: OptionDef) => {
         return stringifyOptionName(opt.name);
     }
 };
+
+type GroupOptionsByDefsValue = { value: string[], options: ParsedOption[] } | null
+export const groupOptionsByDefs = (parsedOptions: ParsedOption[], defs: CommandOptions): Record<string, GroupOptionsByDefsValue> => {
+    return Object.fromEntries(
+        Object.entries(defs)
+            .map(([key, def]): [string, GroupOptionsByDefsValue] => {
+                const options = matchParsedOptionsByDefinition(def, parsedOptions);
+                if (!options.length) return [key, null];
+
+                const merged = options.reduce<string[]>((acc, opt) => acc.concat(opt.value), [])
+                return [key, { value: merged, options: parsedOptions }];
+            })
+    )
+}

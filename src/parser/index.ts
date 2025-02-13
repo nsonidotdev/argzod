@@ -1,24 +1,55 @@
 import { countLeadingDashes, isNumericString, isValidOptionName } from '../utils';
-import { EntryType, OptionValueStyle, OptionVariant } from '../enums';
+import { EntryType, OptionParseType, OptionValueStyle, OptionVariant } from '../enums';
 import { ArgzodError, ErrorCode } from '../errors';
-import type { ParsedEntry } from '../types/arguments';
+import type { ParsedEntry, ParsedOption } from '../types/arguments';
 import { parseInlineOption } from './parse-inline-option';
 import { parseBundledOptions } from './parse-bundled-options';
 import type { Program } from '../program';
 import type { Command } from '../command';
+import { groupOptionsByDefs, stringifyOptionDefintion } from '../utils/options';
 
 export class EntryParser {
     private command: Command;
     private program: Program;
+    private parsedEntries: ParsedEntry[];
 
     constructor(command: Command, program: Program) {
         this.command = command;
         this.program = program;
+        this.parsedEntries = [];
     }
 
     public parse(args: string[]): ParsedEntry[] {
         const formattedEntries = this._format(args);
         const mergedEntries = this._merge(formattedEntries);
+
+        const parsedOptions = mergedEntries.filter(e => e.type === EntryType.Option)
+        const groupedValues = groupOptionsByDefs(parsedOptions, this.command.options)
+
+        // Check parsing type of each option
+        const isValid = Object.entries(this.command.options).reduce<boolean>((acc, [key, def]) => {
+            const group = groupedValues[key];
+            if (!group || !(group.value instanceof Array)) return acc; // Option not defined           
+
+            const stringifiedOptionDef = stringifyOptionDefintion(def);
+
+            if (def.parse === OptionParseType.Boolean && group.value.length !== 0) {
+                this.program._registerError(new ArgzodError({ code: ErrorCode.InvalidOptionValue, ctx: [{ shouldBe: def.parse }], path: stringifiedOptionDef }))
+                return false;
+            }
+
+            if (def.parse === OptionParseType.Single && group.value.length !== 1) {
+                this.program._registerError(new ArgzodError({ code: ErrorCode.InvalidOptionValue, ctx: [{ shouldBe: def.parse }], path: stringifiedOptionDef }))
+                return false;
+            }
+
+            return acc;
+        }, true);
+
+        if (!isValid) {
+            this.program._errorExit();
+            process.exit(1);
+        }
 
         return mergedEntries;
     }
@@ -74,7 +105,7 @@ export class EntryParser {
                     return acc.concat({
                         type: EntryType.Option,
                         original: entry,
-                        value: '',
+                        value: [],
                         name: optionName,
                         variant: OptionVariant.Short,
                         fullName: entry,
@@ -94,7 +125,7 @@ export class EntryParser {
                     acc.push({
                         type: EntryType.Option,
                         original: entry,
-                        value: '',
+                        value: [],
                         name: optionName,
                         variant: OptionVariant.Long,
                         fullName: entry,
@@ -149,7 +180,7 @@ export class EntryParser {
 
                 return {
                     ...entry,
-                    value: entry.value === '' ? optionValue : entry.value,
+                    value: entry.value.length === 0 ? optionValue : entry.value,
                     valueStyle: optionValue.length ? OptionValueStyle.SpaceSeparated : entry.valueStyle,
                 };
             }
@@ -160,10 +191,10 @@ export class EntryParser {
         return mergedEntries.filter((ent) => ent != null);
     }
 
-    private _getSpaceSeparatedOptionValue(entries: ParsedEntry[], optionIndex: number): string | string[] {
+    private _getSpaceSeparatedOptionValue(entries: ParsedEntry[], optionIndex: number): ParsedOption['value'] {
         if (entries[optionIndex]?.type !== EntryType.Option) {
             this.program._registerError(new ArgzodError(ErrorCode.Internal));
-            return '';
+            return [];
         }
 
         let shouldIterate = true;
@@ -176,8 +207,7 @@ export class EntryParser {
             return entry.type === EntryType.Argument ? acc.concat(entry.value) : acc;
         }, []);
 
-        if (values.length === 0) return '';
-        if (values.length === 1) return values[0]!;
+
         return values;
     }
 }

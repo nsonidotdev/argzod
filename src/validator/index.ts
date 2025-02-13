@@ -61,7 +61,7 @@ export class Validator {
 
         const validatedOptions = Object.fromEntries(
             Object.entries(this.command.options).map(([key, optionDef]) => {
-                const matchingOptions = matchParsedOptionsByDefinition([key, optionDef], parsedOptions);
+                const matchingOptions = matchParsedOptionsByDefinition(optionDef, parsedOptions);
 
                 const validateOption = (value: string | undefined, path: string) => {
                     const schema = optionDef.schema ?? schemas.flagSchema;
@@ -85,7 +85,7 @@ export class Validator {
                 let validationResult;
 
                 if (matchingOptions.length === 0) {
-                    validationResult = validateOption(undefined, stringifyOptionDefintion([key, optionDef]));
+                    validationResult = validateOption(undefined, stringifyOptionDefintion(optionDef));
                 } else if (matchingOptions.length === 1) {
                     const option = matchingOptions[0]!;
                     if (typeof option.value === 'string') {

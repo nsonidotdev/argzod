@@ -41,8 +41,8 @@ class Program<T extends string = string> {
 
         const isHelp = validatedData.validatedOptions.help;
 
-        this.logHelp({ targetCommand, indexCommand });
         if (isHelp) {
+            this.logHelp({ targetCommand, indexCommand });
             process.exit(0);
         }
 
@@ -186,6 +186,11 @@ class Program<T extends string = string> {
 
             process.exit(1);
         }
+    }
+
+    _errorExit() {
+        this.logErrors();
+        process.exit(1)
     }
 
     private cleanUp() {
