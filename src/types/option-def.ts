@@ -3,8 +3,8 @@ import type { OptionParseType } from '../enums';
 
 type BaseOptionDef = {
     description?: string;
-    schema: z.ZodType<any>;
     name: Array<string> | string;
+    schema?: z.ZodType<any>;
 };
 
 export type BooleanOptionDef = BaseOptionDef & {
