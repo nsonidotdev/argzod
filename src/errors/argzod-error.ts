@@ -5,8 +5,8 @@ import { errorMessageMap } from './messages';
 import type { ErrorMessageFn } from './types';
 
 export class ArgzodError<
-    TCode extends ErrorCode = any,
-    TMessage extends (typeof errorMessageMap)[TCode] = (typeof errorMessageMap)[TCode],
+    TCode extends ErrorCode = ErrorCode,
+    TMessage extends (typeof errorMessageMap)[NoInfer<TCode>] = (typeof errorMessageMap)[NoInfer<TCode>],
 > extends Error {
     #code: TCode;
     level: ErrorLevel;
@@ -17,11 +17,9 @@ export class ArgzodError<
         data: TMessage extends (...args: any) => string
             ? { code: TCode; ctx: Parameters<TMessage>; path?: string; level?: ErrorLevel }
             : { code: TCode; path?: string; level?: ErrorLevel } | TCode,
-        customMessages?: MessageMap
     ) {
         const messages = {
             ...errorMessageMap,
-            ...customMessages,
         };
 
         let message = '';
