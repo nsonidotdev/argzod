@@ -59,16 +59,19 @@ export const getOptionNames = (opt: OptionDef) => {
     }
 };
 
-type GroupOptionsByDefsValue = { value: string[], options: ParsedOption[] } | null
+// value - is all values of same option merged into 1 array
+type GroupOptionsByDefsValue = 
+ | { value: undefined, options: never[], definition: OptionDef, passed: false }
+ | { value: string[], options: ParsedOption[], definition: OptionDef, passed: true }
 export const groupOptionsByDefs = (parsedOptions: ParsedOption[], defs: CommandOptions): Record<string, GroupOptionsByDefsValue> => {
     return Object.fromEntries(
         Object.entries(defs)
             .map(([key, def]): [string, GroupOptionsByDefsValue] => {
                 const options = matchParsedOptionsByDefinition(def, parsedOptions);
-                if (!options.length) return [key, null];
+                if (!options.length) return [key, { definition: def, options: [], value: undefined, passed: false }];
 
                 const merged = options.reduce<string[]>((acc, opt) => acc.concat(opt.value), [])
-                return [key, { value: merged, options: parsedOptions }];
+                return [key, { value: merged, options, definition: def, passed: true }];
             })
-    )
+    );
 }

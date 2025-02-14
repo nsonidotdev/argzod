@@ -1,14 +1,13 @@
 import type { Program } from '../program';
-import type { ParsedEntry } from '../types/arguments';
-import { schemas } from '../schemas';
+import type { ParsedEntry, ParsedPositionalArgument } from '../types/arguments';
 import {
-    matchOptionDefinitionByOptionName,
-    matchParsedOptionsByDefinition,
+    groupOptionsByDefs,
     stringifyOptionDefintion,
 } from '../utils/options';
 import { ArgzodError, ErrorCode } from '../errors';
-import { EntryType } from '../enums';
+import { EntryType, OptionParseType } from '../enums';
 import type { Command } from '../command';
+import type { OptionValidationInput } from '../types';
 
 export class Validator {
     private program: Program;
@@ -27,7 +26,21 @@ export class Validator {
             this.program._registerError(new ArgzodError(ErrorCode.InvalidArguments));
         }
 
-        const validatedArgs = this.command.args.map((argDef, index) => {
+        const validatedArgs = this.validateArgs(parsedArgs);
+
+        const groupedOptions = groupOptionsByDefs(parsedOptions, this.command.options);
+        this.validateOptionParsingTypes(groupedOptions);
+
+        const validatedOptions = this.validateOptionValues(groupedOptions);
+
+        return {
+            validatedArgs,
+            validatedOptions,
+        };
+    }
+
+    private validateArgs(parsedArgs: ParsedPositionalArgument[]) {
+        return this.command.args.map((argDef, index) => {
             const argParseResult = argDef.schema.safeParse(parsedArgs[index]?.value);
 
             if (!argParseResult.success) {
@@ -44,28 +57,51 @@ export class Validator {
 
             return argParseResult.data;
         });
+    }
 
-        // Handle not defined options
-        parsedOptions.some((opt) => {
-            const result = matchOptionDefinitionByOptionName(opt.name, this.command.options);
+    private validateOptionParsingTypes(groupedOptions: ReturnType<typeof groupOptionsByDefs>) {
+        Object.entries(this.command.options).forEach(([key, def]) => {
+            const group = groupedOptions[key];
+            if (!group || !group.passed) return;
 
-            if (!result) {
-                this.program._registerError(
-                    new ArgzodError({
-                        code: ErrorCode.OptionNotDefined,
-                        path: opt.fullName,
-                    })
-                );
+            const stringifiedOptionDef = stringifyOptionDefintion(def);
+            const registerError = () => this.program._registerError(
+                new ArgzodError({
+                    code: ErrorCode.InvalidOptionValue,
+                    ctx: [{ shouldBe: def.parse }],
+                    path: stringifiedOptionDef
+                })
+            )
+
+
+            if (def.parse === OptionParseType.Boolean && group.value.length !== 0) {
+                registerError();
+            }
+
+            if (def.parse === OptionParseType.Single && group.value.length !== 1) {
+                registerError()
             }
         });
+    }
 
-        const validatedOptions = Object.fromEntries(
-            Object.entries(this.command.options).map(([key, optionDef]) => {
-                const matchingOptions = matchParsedOptionsByDefinition(optionDef, parsedOptions);
+    private validateOptionValues(groupedOptions: ReturnType<typeof groupOptionsByDefs>): Record<string, any> {
+        return Object.fromEntries(
+            Object.entries(groupedOptions)
+                .map(([key, { definition, passed, value }]) => {
+                    const path = stringifyOptionDefintion(definition);
 
-                const validateOption = (value: string | undefined, path: string) => {
-                    const schema = optionDef.schema ?? schemas.flagSchema;
-                    const zodResult = schema.safeParse(value);
+                    let input: OptionValidationInput;
+
+                    if (definition.parse === 'boolean') {
+                        input = passed;
+                    } else if (definition.parse === 'signle') {
+                        input = passed ? value[0] : undefined;
+                    } else {
+                        input = passed ? value : [];
+                    }
+                    
+                    if (!definition.schema) return [key, input];
+                    const zodResult = definition.schema.safeParse(input);
 
                     if (!zodResult.success) {
                         this.program._registerError(
@@ -79,43 +115,9 @@ export class Validator {
                         return null;
                     }
 
-                    return zodResult.data;
-                };
-
-                let validationResult;
-
-                if (matchingOptions.length === 0) {
-                    validationResult = validateOption(undefined, stringifyOptionDefintion(optionDef));
-                } else if (matchingOptions.length === 1) {
-                    const option = matchingOptions[0]!;
-                    if (typeof option.value === 'string') {
-                        validationResult = validateOption(option.value, option.fullName);
-                    } else {
-                        validationResult = option.value.map((val) => {
-                            return validateOption(val, option.fullName);
-                        });
-                    }
-                } else {
-                    validationResult = matchingOptions
-                        .map((option) => {
-                            if (typeof option.value === 'string') {
-                                return validateOption(option.value, option.fullName);
-                            } else {
-                                return option.value.map((val) => {
-                                    return validateOption(val, option.fullName);
-                                });
-                            }
-                        })
-                        .flat();
-                }
-
-                return [key, validationResult];
-            })
+                    return [key, zodResult.data];
+                })
+                .filter(ent => ent != null)
         );
-
-        return {
-            validatedArgs,
-            validatedOptions,
-        };
     }
 }

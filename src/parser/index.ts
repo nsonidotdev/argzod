@@ -1,12 +1,12 @@
 import { countLeadingDashes, isNumericString, isValidOptionName } from '../utils';
-import { EntryType, OptionParseType, OptionValueStyle, OptionVariant } from '../enums';
+import { EntryType, OptionValueStyle, OptionVariant } from '../enums';
 import { ArgzodError, ErrorCode } from '../errors';
 import type { ParsedEntry, ParsedOption } from '../types/arguments';
 import { parseInlineOption } from './parse-inline-option';
 import { parseBundledOptions } from './parse-bundled-options';
 import type { Program } from '../program';
 import type { Command } from '../command';
-import { groupOptionsByDefs, stringifyOptionDefintion } from '../utils/options';
+import { matchOptionDefinitionByOptionName } from '../utils/options';
 
 export class EntryParser {
     private command: Command;
@@ -23,33 +23,21 @@ export class EntryParser {
         const formattedEntries = this._format(args);
         const mergedEntries = this._merge(formattedEntries);
 
-        const parsedOptions = mergedEntries.filter(e => e.type === EntryType.Option)
-        const groupedValues = groupOptionsByDefs(parsedOptions, this.command.options)
+        // Handle not defined options
+        mergedEntries
+            .filter(e => e.type === EntryType.Option)
+            .forEach((opt) => {
+                const result = matchOptionDefinitionByOptionName(opt.name, this.command.options);
 
-        // Check parsing type of each option
-        const isValid = Object.entries(this.command.options).reduce<boolean>((acc, [key, def]) => {
-            const group = groupedValues[key];
-            if (!group || !(group.value instanceof Array)) return acc; // Option not defined           
-
-            const stringifiedOptionDef = stringifyOptionDefintion(def);
-
-            if (def.parse === OptionParseType.Boolean && group.value.length !== 0) {
-                this.program._registerError(new ArgzodError({ code: ErrorCode.InvalidOptionValue, ctx: [{ shouldBe: def.parse }], path: stringifiedOptionDef }))
-                return false;
-            }
-
-            if (def.parse === OptionParseType.Single && group.value.length !== 1) {
-                this.program._registerError(new ArgzodError({ code: ErrorCode.InvalidOptionValue, ctx: [{ shouldBe: def.parse }], path: stringifiedOptionDef }))
-                return false;
-            }
-
-            return acc;
-        }, true);
-
-        if (!isValid) {
-            this.program._errorExit();
-            process.exit(1);
-        }
+                if (!result) {
+                    this.program._registerError(
+                        new ArgzodError({
+                            code: ErrorCode.OptionNotDefined,
+                            path: opt.fullName,
+                        })
+                    );
+                }
+            });
 
         return mergedEntries;
     }

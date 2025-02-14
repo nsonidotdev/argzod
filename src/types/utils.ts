@@ -13,3 +13,4 @@ export type InferCommandOptions<TOpts extends CommandOptions> = {
 };
 
 export type ObjectValues<T extends Record<string, any>> = T[keyof T];
+export type AutocompleteString<T extends string> = T | (string & {}) 
