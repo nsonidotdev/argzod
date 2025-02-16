@@ -26,7 +26,7 @@ export const parseInlineOption = ({ leadingDashes, entry }: { entry: string; lea
 
     return {
         type: EntryType.Option,
-        value: optValue,
+        value: [optValue],
         name: optName,
         variant: OptionVariant.Short,
         fullName: `--${optName}`,
