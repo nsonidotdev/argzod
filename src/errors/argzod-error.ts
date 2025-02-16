@@ -81,4 +81,8 @@ export class ArgzodError<
             this.message = messageFn(...ctx);
         }
     }
+
+    __setPath(path: string) {
+        this.path = path;
+    }
 }

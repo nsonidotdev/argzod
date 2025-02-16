@@ -1,13 +1,12 @@
 import type { Program } from '../program';
 import type { ParsedEntry, ParsedPositionalArgument } from '../types/arguments';
 import {
-    groupOptionsByDefs,
     stringifyOptionDefintion,
 } from '../utils/options';
 import { ArgzodError, ErrorCode } from '../errors';
-import { EntryType, OptionParseType } from '../enums';
+import { EntryType } from '../enums';
 import type { Command } from '../command';
-import type { OptionValidationInput } from '../types';
+import { collectOptionsData } from '../parser/collect';
 
 export class Validator {
     private program: Program;
@@ -28,8 +27,7 @@ export class Validator {
 
         const validatedArgs = this.validateArgs(parsedArgs);
 
-        const groupedOptions = groupOptionsByDefs(parsedOptions, this.command.options);
-        this.validateOptionParsingTypes(groupedOptions);
+        const groupedOptions = collectOptionsData(parsedOptions, this.command.options);
 
         const validatedOptions = this.validateOptionValues(groupedOptions);
 
@@ -59,55 +57,20 @@ export class Validator {
         });
     }
 
-    private validateOptionParsingTypes(groupedOptions: ReturnType<typeof groupOptionsByDefs>) {
-        Object.entries(this.command.options).forEach(([key, def]) => {
-            const group = groupedOptions[key];
-            if (!group || !group.passed) return;
-
-            const stringifiedOptionDef = stringifyOptionDefintion(def);
-            const registerError = () => this.program._registerError(
-                new ArgzodError({
-                    code: ErrorCode.InvalidOptionValue,
-                    ctx: [{ shouldBe: def.parse }],
-                    path: stringifiedOptionDef
-                })
-            )
 
 
-            if (def.parse === OptionParseType.Boolean && group.value.length !== 0) {
-                registerError();
-            }
-
-            if (def.parse === OptionParseType.Single && group.value.length !== 1) {
-                registerError()
-            }
-        });
-    }
-
-    private validateOptionValues(groupedOptions: ReturnType<typeof groupOptionsByDefs>): Record<string, any> {
+    private validateOptionValues(groupedOptions: ReturnType<typeof collectOptionsData>): Record<string, any> {
         return Object.fromEntries(
             Object.entries(groupedOptions)
-                .map(([key, { definition, passed, value }]) => {
-                    const path = stringifyOptionDefintion(definition);
-
-                    let input: OptionValidationInput;
-
-                    if (definition.parse === 'boolean') {
-                        input = passed;
-                    } else if (definition.parse === 'signle') {
-                        input = passed ? value[0] : undefined;
-                    } else {
-                        input = passed ? value : [];
-                    }
-                    
-                    if (!definition.schema) return [key, input];
-                    const zodResult = definition.schema.safeParse(input);
+                .map(([key, { definition, value }]) => {
+                    if (!definition.schema) return [key, value];
+                    const zodResult = definition.schema.safeParse(value);
 
                     if (!zodResult.success) {
                         this.program._registerError(
                             new ArgzodError({
                                 code: ErrorCode.Validation,
-                                path,
+                                path: stringifyOptionDefintion(definition),
                                 ctx: [zodResult.error],
                             })
                         );
