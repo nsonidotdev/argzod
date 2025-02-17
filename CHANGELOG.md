@@ -1,5 +1,19 @@
 # argzod
 
+## 0.6.0
+
+### Minor Changes
+
+- 1c87739: Option parsing types.
+  Add ability to define how option values should be parsed (boolean, single, many)
+  `boolean` expects no arguments, but if some of them are passed then they are treated as positional arguments
+  `single` does the same as boolean, but it expects 1 value and followed are treated as positional arguments.
+  `many` adds all followed arguments to its value
+
+### Patch Changes
+
+- e088a75: maxValues for `many` option parse type
+
 ## 0.5.2
 
 ### Patch Changes
