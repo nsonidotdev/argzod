@@ -156,29 +156,33 @@ export class EntryParser {
 
             const defResult = matchOptionDefinitionByOptionName(entry.name, this.command.options);
             if (!defResult) return acc;
-
             const [, def] = defResult;
+
+            const splitValuesAndArgs = (args: ParsedPositionalArgument[], maxArgs?: number): { values: string[], args: ParsedPositionalArgument[] } => {
+                if (typeof maxArgs !== 'number') {
+                    return {
+                        values: args.map(a => a.value),
+                        args: [],
+                    }
+                }
+                return {
+                    values: nextValues.slice(0, maxArgs).map(e => e.value),
+                    args: nextValues.slice(maxArgs)
+                }
+            }
+
 
             const nextValues = this.getFollowedArgs(arr.slice(index + 1));
 
-            if (def.parse === OptionParseType.Boolean) {
-                return [...acc, entry, ...nextValues]
+            const maxValuesMap: Record<OptionParseType, number | undefined> = {
+                boolean: 0,
+                single: 1,
+                many: def.parse === 'many' ? def.maxValues : undefined
             }
 
-            if (def.parse === OptionParseType.Single) {
-                entry.value = nextValues[0] ? [...entry.value, nextValues[0].value] : entry.value;
-                const restValues = nextValues.length > 1 ? nextValues.slice(1) : [];
-
-                return [...acc, entry, ...restValues]
-            }
-
-            if (def.parse === OptionParseType.Many) {
-                entry.value = [...entry.value, ...nextValues.map(e => e.value)]
-
-                return [...acc, entry];
-            }
-
-            return acc;
+            const { args, values } = splitValuesAndArgs(nextValues, maxValuesMap[def.parse]);
+            entry.value = [...entry.value, ...values]
+            return [...acc, entry, ...args]
         }, []);
 
         return resolvedEntries;

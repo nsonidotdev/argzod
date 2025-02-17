@@ -18,6 +18,7 @@ export type SingleOptionDef = BaseOptionDef & {
 
 export type ManyOptionDef = BaseOptionDef & {
     parse: (typeof OptionParseType)['Many'];
+    maxValues?: number;
 };
 
 export type OptionDef = 
