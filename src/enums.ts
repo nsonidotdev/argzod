@@ -28,7 +28,7 @@ export type ErrorLevel = ObjectValues<typeof ErrorLevel>;
 
 export const OptionParseType = {
     Boolean: 'boolean',
-    Single: 'signle',
+    Single: 'single',
     Many: 'many'
 } as const;
 export type OptionParseType = ObjectValues<typeof OptionParseType>

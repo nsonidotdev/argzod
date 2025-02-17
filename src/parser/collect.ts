@@ -41,7 +41,7 @@ const parseBooleanOption = (options: ParsedOption[]): OptionValidationInput<'boo
     return options.length === 1;
 };
 
-const parseSingleOption = (options: ParsedOption[]): OptionValidationInput<'signle'> | ArgzodError => {
+const parseSingleOption = (options: ParsedOption[]): OptionValidationInput<'single'> | ArgzodError => {
     if (!options.length) return undefined;
 
     const isNotDuplicated = options.length < 2;
