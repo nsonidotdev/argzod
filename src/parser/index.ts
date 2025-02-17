@@ -1,7 +1,7 @@
 import { countLeadingDashes, isNumericString, isValidOptionName } from '../utils';
-import { EntryType, OptionValueStyle, OptionVariant } from '../enums';
+import { EntryType, OptionParseType, OptionVariant } from '../enums';
 import { ArgzodError, ErrorCode } from '../errors';
-import type { ParsedEntry, ParsedOption } from '../types/arguments';
+import type { ParsedEntry, ParsedPositionalArgument } from '../types/arguments';
 import { parseInlineOption } from './parse-inline-option';
 import { parseBundledOptions } from './parse-bundled-options';
 import type { Program } from '../program';
@@ -11,17 +11,15 @@ import { matchOptionDefinitionByOptionName } from '../utils/options';
 export class EntryParser {
     private command: Command;
     private program: Program;
-    private parsedEntries: ParsedEntry[];
 
     constructor(command: Command, program: Program) {
         this.command = command;
         this.program = program;
-        this.parsedEntries = [];
     }
 
     public parse(args: string[]): ParsedEntry[] {
         const formattedEntries = this._format(args);
-        const mergedEntries = this._merge(formattedEntries);
+        const mergedEntries = this._resolveEntries(formattedEntries);
 
         // Handle not defined options
         mergedEntries
@@ -143,59 +141,57 @@ export class EntryParser {
         }, []);
     }
 
-    private _merge(formattedEntries: ParsedEntry[]): ParsedEntry[] {
-        let optionsStarted = false;
+    private _resolveEntries(formattedEntries: ParsedEntry[]): ParsedEntry[] {
+        let isOptionMet = false;
 
-        const mergedEntries: Array<ParsedEntry | null> = formattedEntries.map((entry, index) => {
-            if (!optionsStarted) {
-                // identify if positional arguments are over
-                optionsStarted = formattedEntries.slice(0, index + 1).some((ent) => ent.type === EntryType.Option);
+        const resolvedEntries = formattedEntries.reduce<Array<ParsedEntry>>((acc, entry, index, arr) => {
+            if (entry.type === EntryType.Argument) {
+                // If option is met then argument may be value of the option 
+                // This scenario is handled further
+                if (isOptionMet) return acc;
+                return [...acc, entry]
+            };
+
+            isOptionMet = true;
+
+            const defResult = matchOptionDefinitionByOptionName(entry.name, this.command.options);
+            if (!defResult) return acc;
+
+            const [, def] = defResult;
+
+            const nextValues = this.getFollowedArgs(arr.slice(index + 1));
+
+            if (def.parse === OptionParseType.Boolean) {
+                return [...acc, entry, ...nextValues]
             }
 
-            if (entry.type === EntryType.Argument && optionsStarted) {
-                // If entry is placed after the first option it is value of the option and should be merged to it. So skip this argument
-                return null;
+            if (def.parse === OptionParseType.Single) {
+                entry.value = nextValues[0] ? [...entry.value, nextValues[0].value] : entry.value;
+                const restValues = nextValues.length > 1 ? nextValues.slice(1) : [];
+
+                return [...acc, entry, ...restValues]
             }
 
-            if (entry.type === EntryType.Option) {
-                // Merge option with its value (space-separated value style)
-                const optionValue = this._getSpaceSeparatedOptionValue(formattedEntries, index);
-                if (optionValue.length && entry.valueStyle) {
-                    this.program._registerError(new ArgzodError(ErrorCode.InvalidOption));
+            if (def.parse === OptionParseType.Many) {
+                entry.value = [...entry.value, ...nextValues.map(e => e.value)]
 
-                    return null;
-                }
-
-                return {
-                    ...entry,
-                    value: entry.value.length === 0 ? optionValue : entry.value,
-                    valueStyle: optionValue.length ? OptionValueStyle.SpaceSeparated : entry.valueStyle,
-                };
+                return [...acc, entry];
             }
 
-            return entry;
+            return acc;
         }, []);
 
-        return mergedEntries.filter((ent) => ent != null);
+        return resolvedEntries;
     }
 
-    private _getSpaceSeparatedOptionValue(entries: ParsedEntry[], optionIndex: number): ParsedOption['value'] {
-        if (entries[optionIndex]?.type !== EntryType.Option) {
-            this.program._registerError(new ArgzodError(ErrorCode.Internal));
-            return [];
+    private getFollowedArgs(followedEntries: ParsedEntry[]): ParsedPositionalArgument[] {
+        let args: ParsedPositionalArgument[] = [];
+
+        for (let entry of followedEntries) {
+            if (entry.type === EntryType.Option) break;
+            args.push(entry);
         }
 
-        let shouldIterate = true;
-        const values = entries.slice(optionIndex + 1).reduce<string[]>((acc, entry) => {
-            if (entry.type === EntryType.Option) {
-                shouldIterate = false;
-            }
-            if (!shouldIterate) return acc;
-
-            return entry.type === EntryType.Argument ? acc.concat(entry.value) : acc;
-        }, []);
-
-
-        return values;
+        return args;
     }
 }
