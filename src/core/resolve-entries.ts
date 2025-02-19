@@ -1,7 +1,6 @@
 import type { Command } from "../api/command";
-import type { OptionParseType } from "../enums";
-import { EntryType } from "../enums";
-import type { ParsedEntry, ParsedPositionalArgument } from "../types/entries";
+import { EntryType, OptionValueStyle } from "../enums";
+import type { ParsedEntry, ParsedOption, ParsedPositionalArgument } from "../types/entries";
 import { operation } from "../utils/operation";
 import { matchOptionDefinitionByOptionName } from "../utils/options";
 
@@ -22,27 +21,27 @@ export const resolveEntries = operation((ctx, command: Command, entries: ParsedE
         isOptionMet = true;
 
         const defResult = matchOptionDefinitionByOptionName(entry.name, command.options);
-        if (!defResult) return acc;
-        const [, def] = defResult;
-
         const nextValues = getFollowedArgs(arr.slice(index + 1));
-
-        const maxValuesMap: Record<OptionParseType, number | undefined> = {
+        const maxValues = defResult ? {
             boolean: 0,
             single: 1,
-            many: def.parse === 'many' ? def.maxValues : undefined
-        }
+            many: defResult[1].parse === 'many' ? defResult[1].maxValues : undefined
+        }[defResult[1].parse] : undefined;
 
-        const { args, values } = splitValuesAndArgs(nextValues, maxValuesMap[def.parse]);
-        entry.value = [...entry.value, ...values]
-        return [...acc, entry, ...args]
+        const { values, args } = splitValuesAndArgs(entry, nextValues, maxValues);
+        entry.value = [...entry.value, ...values];
+        return [...acc, entry, ...args];
     }, []);
 
 
     return resolvedEntries;
 })
 
-const splitValuesAndArgs = (args: ParsedPositionalArgument[], maxArgs?: number): { values: string[], args: ParsedPositionalArgument[] } => {
+const splitValuesAndArgs = (option: ParsedOption, args: ParsedPositionalArgument[], maxArgs?: number): { values: string[], args: ParsedPositionalArgument[] } => {
+    if (option.valueStyle && option.valueStyle !== OptionValueStyle.SpaceSeparated) {
+        return { values: [], args }
+    }
+
     if (typeof maxArgs !== 'number') {
         return {
             values: args.map(a => a.value),
