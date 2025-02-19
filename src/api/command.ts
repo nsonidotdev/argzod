@@ -39,18 +39,13 @@ class Command {
 
     process(entries: string[]) {
         const parsedEntries = parseEntries(this, entries).unwrap(this.program);
-        console.log(parsedEntries)
         const resolvedEntries = resolveEntries(this, parsedEntries).unwrap(this.program);
-        console.log(resolvedEntries)
 
         const options = resolvedEntries.filter(e => e.type === EntryType.Option);
         const args = resolvedEntries.filter(e => e.type === EntryType.Argument);
 
         const validatedOptions = validateOptions(options, this.options).unwrap(this.program);
-        console.log(validatedOptions)
-
         const validatedArgs = validateArgs(this, args).unwrap(this.program);
-        console.log(validatedArgs)
 
         return {
             entries,
