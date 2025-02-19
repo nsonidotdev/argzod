@@ -1,6 +1,6 @@
 import type { Command } from "../api/command"
 import type { ParsedEntry } from "../types/entries"
-import { EntryType, OptionValueStyle, OptionVariant } from '../enums';
+import { EntryType, OptionParseType, OptionValueStyle, OptionVariant } from '../enums';
 import type { ParsedOption } from '../types/entries';
 import type { CommandOptions } from '../types/command';
 import { matchOptionDefinitionByOptionName } from '../utils/options';
@@ -54,6 +54,7 @@ export const parseEntries = operation((ctx, command: Command, entries: string[])
 
             return acc;
         }
+
 
         if (leadingDashesCount === 1) {
             if (optionName.length === 1) {
@@ -144,8 +145,6 @@ const parseInlineOptionEntry = ({ leadingDashes, entry }: { entry: string; leadi
     };
 };
 
-
-
 // expects string like -abc or -abcvalue
 const parseBundledOptionsEntry = ({
     entry,
@@ -157,46 +156,50 @@ const parseBundledOptionsEntry = ({
     const name = entry.slice(1);
     const bundledOptions = name.split('');
 
-    const firstUndefinedOptionIndex = bundledOptions.findIndex((optName) => {
-        return !matchOptionDefinitionByOptionName(optName, optionDefinitions);
-    });
+    const valuesMap: Map<string, string | undefined> = new Map();
 
-    if (firstUndefinedOptionIndex > 0) {
-        // first undefined option (value start index) should be at least second by its index so there is option name
-        const optionsToBundle = bundledOptions.slice(0, firstUndefinedOptionIndex);
-        const attachedValue = name.slice(firstUndefinedOptionIndex);
+    for (let [index, opt] of bundledOptions.entries()) {
+        if (!isValidOptionName(opt)) continue;
+        if (valuesMap.has(opt)) {
+            // Duplicate option
+            throw new ArgzodError({
+                code: ErrorCode.InvalidOption,
+            });
+        };
 
-        return optionsToBundle.map((optName, index) => {
-            const isLast = index === optionsToBundle.length - 1;
+        const matched = matchOptionDefinitionByOptionName(opt, optionDefinitions);
+        if (!matched || (matched[1].parse === OptionParseType.Boolean)) {
+            const filteredValues = bundledOptions
+                .slice(index + 1)
+                .filter(o => !isValidOptionName(o));
 
-            return {
-                fullName: '-' + optName,
-                original: entry,
-                name: optName,
-                type: EntryType.Option,
-                value: isLast ? [attachedValue] : [],
-                variant: OptionVariant.Short,
-                valueStyle: isLast ? OptionValueStyle.Attached : undefined,
-                bunled: {
-                    fullName: entry,
-                    opts: optionsToBundle,
-                },
-            };
-        });
+            const value = filteredValues.length ? filteredValues.join('') : undefined
+            valuesMap.set(opt, value);
+            continue;
+        }
+
+        const value = bundledOptions.slice(index + 1).join('');
+        valuesMap.set(opt, value);
+        break;
     }
 
-    return bundledOptions.map((opt) => {
+    const optionNames = Array.from(valuesMap.keys());
+    const parsedBundledOptions = Array.from(valuesMap.entries(), ([optName, value]) => {
+        const hasValue = typeof value === 'string';
         return {
-            type: EntryType.Option,
-            value: [],
-            name: opt,
-            variant: OptionVariant.Short,
-            fullName: `-${opt}`,
+            fullName: '-' + optName,
+            name: optName,
             original: entry,
+            type: EntryType.Option,
+            value: hasValue ? [value] : [],
+            variant: OptionVariant.Short,
+            valueStyle: hasValue ? OptionValueStyle.Attached : undefined,
             bunled: {
                 fullName: entry,
-                opts: bundledOptions,
-            },
-        };
-    });
+                opts: optionNames
+            }
+        } satisfies ParsedOption
+    })
+
+    return parsedBundledOptions
 };

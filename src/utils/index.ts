@@ -23,7 +23,12 @@ export const removeObjectKeys = <T extends Record<string, any>, U extends keyof 
     return result;
 };
 
-export const isValidOptionName = (string: string) => /^[a-zA-Z0-9-_]+$/.test(string);
+export const isValidOptionName = (option: string): boolean => {
+    const shortOptionPattern = /^[a-zA-Z]$/;
+    const longOptionPattern = /^[a-zA-Z][a-zA-Z0-9-]*$/; 
+    
+    return shortOptionPattern.test(option) || longOptionPattern.test(option);
+}
 export const isNumericString = (str: string) => /^[0-9]+$/.test(str);
 
 export const generateGuid = () => {
