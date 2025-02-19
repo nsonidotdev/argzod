@@ -1,9 +1,9 @@
-import { EntryParser } from './parser';
 import type { Program } from './program';
-import type { ActionData, CommandArguments, CommandDefinition, CommandName, CommandOptions } from './types/command';
-import type { InferCommandArguments, InferCommandOptions } from './types/utils';
-import { Validator } from './validator';
-import { helpOption } from './built-in';
+import type { ActionData, CommandArguments, CommandDefinition, CommandName, CommandOptions } from '../types/command';
+import type { InferCommandArguments, InferCommandOptions } from '../types/utils';
+import { helpOption } from '../built-in';
+import { parseEntries, resolveEntries, validateArgs, validateOptions } from '../core';
+import { EntryType } from '../enums';
 
 export const createCommand = <
     const TArgs extends CommandArguments = CommandArguments,
@@ -38,17 +38,26 @@ class Command {
     }
 
     process(entries: string[]) {
-        const parser = new EntryParser(this, this.program);
-        const parsedEntries = this.program._registerError(() => parser.parse(entries), 'exit');
+        const parsedEntries = parseEntries(this, entries).unwrap(this.program);
+        console.log(parsedEntries)
+        const resolvedEntries = resolveEntries(this, parsedEntries).unwrap(this.program);
+        console.log(resolvedEntries)
 
-        const validator = new Validator(this, this.program);
-        const validatedData = this.program._registerError(() => validator.validate(parsedEntries), 'exit');
+        const options = resolvedEntries.filter(e => e.type === EntryType.Option);
+        const args = resolvedEntries.filter(e => e.type === EntryType.Argument);
+
+        const validatedOptions = validateOptions(options, this.options).unwrap(this.program);
+        console.log(validatedOptions)
+
+        const validatedArgs = validateArgs(this, args).unwrap(this.program);
+        console.log(validatedArgs)
 
         return {
-            parser,
+            entries,
             parsedEntries,
-            validator,
-            validatedData,
+            resolvedEntries,
+            validatedOptions,
+            validatedArgs
         };
     }
 

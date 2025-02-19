@@ -1,14 +1,14 @@
-import type { CommandArguments, CommandOptions, CommandDefinition } from './types/command';
-import { ArgzodError, ErrorCode } from './errors';
-import type { ProgramConfig } from './types/program';
+import type { CommandArguments, CommandOptions, CommandDefinition } from '../types/command';
+import { ArgzodError, ErrorCode } from '../errors';
+import type { ProgramConfig } from '../types/program';
 import type { Command } from './command';
 import { createCommand } from './command';
-import { generateGuid, groupErrors } from './utils';
-import { ErrorLevel } from './enums';
-import { WARN_CHAR } from './constants';
+import { generateGuid, groupErrors } from '../utils';
+import { ErrorLevel } from '../enums';
+import { WARN_CHAR } from '../constants';
 import chalk from 'chalk';
-import type { GroupedErrors } from './types';
-import { HelpLogger } from './utils/help-logger';
+import type { GroupedErrors } from '../types';
+import { HelpLogger } from '../utils/help-logger';
 
 const DEFAULT_CONFIG: ProgramConfig = {
     name: '',
@@ -37,24 +37,26 @@ class Program<T extends string = string> {
     run(args: string[] = process.argv.slice(2)) {
         this.cleanUp();
         const { process: processCommand, targetCommand, indexCommand } = this.matchCommand(args);
-        const { validatedData, parsedEntries } = processCommand();
-
-        const isHelp = validatedData.validatedOptions.help;
-
+        const { validatedArgs, validatedOptions, parsedEntries } = processCommand();
+        const validatedMap = Object.fromEntries(Object.entries(validatedOptions.validated).map(([key, opt]) => [key, opt.value]))
+        
+        const isHelp = validatedMap.help;
+        
         if (isHelp) {
             this.logHelp({ targetCommand, indexCommand });
             process.exit(0);
         }
-
+        
         if (this.errors.size) {
             const { error } = this.logErrors();
-
+            
             if (error.length) process.exit(1);
         }
-
+        
+        
         targetCommand.action({
-            args: validatedData.validatedArgs,
-            options: validatedData.validatedOptions,
+            args: validatedArgs,
+            options: validatedMap,
             parsedCommandLine: parsedEntries,
         });
     }

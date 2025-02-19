@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 import type { CommandArguments, CommandOptions } from './command';
-import type { OptionParsedReturnType } from '.';
+import type { OptionParsedReturnType } from './entries';
 
 export type InferCommandArguments<TArgs extends CommandArguments> = {
     [K in keyof TArgs]: z.infer<TArgs[K]['schema']>;

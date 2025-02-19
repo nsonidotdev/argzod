@@ -1,4 +1,4 @@
-import type { ArgumentDefinition, ParsedEntry } from './arguments';
+import type { ArgumentDefinition, ParsedEntry } from './entries';
 import type { OptionDef } from './option-def';
 import type { InferCommandArguments, InferCommandOptions } from './utils';
 

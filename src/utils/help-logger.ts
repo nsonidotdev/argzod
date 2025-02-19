@@ -1,4 +1,4 @@
-import type { Command } from '../command';
+import type { Command } from '../api/command';
 import chalk from 'chalk';
 import { getOptionNames } from '../utils/options';
 

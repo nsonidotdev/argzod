@@ -1,4 +1,4 @@
-import type { ParsedOption } from '../types/arguments';
+import type { ParsedOption } from '../types/entries';
 import type { CommandOptions } from '../types/command';
 import type { OptionDef } from '../types/option-def';
 
@@ -17,8 +17,8 @@ export const matchOptionDefinitionByOptionName = <T extends string>(
 
 export const matchParsedOptionsByDefinition = (
     definition: OptionDef,
-    parsedOptions: ParsedOption[]
-): ParsedOption[] => {
+    parsedOptions: ParsedOption[] 
+): (ParsedOption & { index: number })[] => {
     const definitionNames: string[] = [];
 
     if (typeof definition.name === 'string') {
@@ -27,9 +27,16 @@ export const matchParsedOptionsByDefinition = (
         definitionNames.push(...definition.name);
     }
 
-    return parsedOptions.filter((opt) => {
-        return definitionNames.some((name) => name === opt.name);
-    });
+    return parsedOptions.reduce<(ParsedOption & { index: number })[]>((acc, opt, index) => {
+        const isMatching = definitionNames.some((name) => name === opt.name);
+        if (!isMatching) return acc;
+        const withIndex = {
+            ...opt,
+            index
+        }
+
+        return [...acc, withIndex];
+    }, []);
 };
 
 export const stringifyOptionDefintion = (defintion: OptionDef): string => {
