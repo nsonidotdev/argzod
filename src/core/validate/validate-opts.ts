@@ -10,7 +10,6 @@ import { operation } from "../../utils/operation";
 
 export const validateOptions = operation((ctx, parsedOptions: ParsedOption[], defs: CommandOptions): { validated: Record<string, ValidatedOption>, unknown: ParsedOption[] } => {
     const capturedOptionsIndecies: Set<number> = new Set();
-    const errors: ArgzodError[] = [];
 
     const validatedOptions = Object.fromEntries(
         Object.entries(defs)
@@ -19,20 +18,20 @@ export const validateOptions = operation((ctx, parsedOptions: ParsedOption[], de
                 options.forEach(o => capturedOptionsIndecies.add(o.index));
 
                 const appliedResult = applyParsingStrategy(def, options);
-
+                
                 if (appliedResult instanceof ArgzodError) {
                     appliedResult.__setPath(stringifyOptionDefintion(def));
-                    errors.push(appliedResult);
+                    ctx.errors.add(appliedResult);
                     return [key, { value: undefined, definition: def, options: options }]
                 };
-
+                
                 let validatedData = appliedResult;
-
+                
                 if (def.schema) {
                     const zodResult = def.schema.safeParse(appliedResult)
 
                     if (!zodResult.success) {
-                        errors.push(
+                        ctx.errors.add(
                             new ArgzodError({
                                 code: ErrorCode.Validation,
                                 path: stringifyOptionDefintion(def),
