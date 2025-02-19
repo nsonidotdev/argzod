@@ -1,5 +1,11 @@
 # argzod
 
+## 0.6.2
+
+### Patch Changes
+
+- 8e89cfc: fix option validation errors not registring
+
 ## 0.6.1
 
 ### Patch Changes
