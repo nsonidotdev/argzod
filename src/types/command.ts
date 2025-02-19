@@ -1,4 +1,4 @@
-import type { ArgumentDefinition, ParsedEntry } from './entries';
+import type { ArgumentDefinition, ParsedEntry, ParsedOption } from './entries';
 import type { OptionDef } from './option-def';
 import type { InferCommandArguments, InferCommandOptions } from './utils';
 
@@ -14,7 +14,8 @@ export type ActionData<
 > = {
     options: TOpts;
     args: TArgs;
-    parsedCommandLine: ParsedEntry[];
+    parsedEntries: ParsedEntry[];
+    unknownOptions: ParsedOption[];
 };
 
 export type CommandOptions = Record<string, OptionDef> & Partial<{ help: OptionDef }>;

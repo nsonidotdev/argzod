@@ -57,7 +57,8 @@ class Program<T extends string = string> {
         targetCommand.action({
             args: validatedArgs,
             options: validatedMap,
-            parsedCommandLine: parsedEntries,
+            unknownOptions: validatedOptions.unknown,
+            parsedEntries: parsedEntries
         });
     }
 
