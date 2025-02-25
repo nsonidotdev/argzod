@@ -1,7 +1,7 @@
 {
 	"name": "argzod",
 	"version": "0.6.2",
-	"description": "Command-line interfaces powered with Zod",
+	"description": "Minimalistic typescript-first CLI parser powerd with Zod",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/nsonidotdev/argzod.git"
