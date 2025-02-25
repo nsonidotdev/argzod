@@ -1,6 +1,6 @@
 {
 	"name": "argzod",
-	"version": "0.6.2",
+	"version": "0.6.3",
 	"description": "Minimalistic typescript-first CLI parser powerd with Zod",
 	"repository": {
 		"type": "git",

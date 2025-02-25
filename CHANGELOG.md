@@ -1,5 +1,11 @@
 # argzod
 
+## 0.6.3
+
+### Patch Changes
+
+- df12c41: Add README
+
 ## 0.6.2
 
 ### Patch Changes
